@@ -266,8 +266,10 @@ export function createRunnerOpportunityEngineWithPredictiveCache(deps: RunnerOpp
         if (predictiveRoutes.length > 0) {
           return predictiveRoutes;
         }
-        return deps.getAffectedRoutes(changedPools);
+        // Use the ORIGINAL getAffectedRoutes (captured before replacement)
+        return originalGetAffectedRoutes(changedPools);
       };
+      const originalGetAffectedRoutes = deps.getAffectedRoutes;
       deps.getAffectedRoutes = wrappedGetAffectedRoutes;
 
       logger.info("[predictive-cache] Integrated into opportunity engine");
