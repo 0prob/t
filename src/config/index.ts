@@ -441,8 +441,8 @@ export const CONFIG_DEFAULT_SLIPPAGE_BPS = BigInt(_num("SLIPPAGE_BPS", "SLIPPAGE
 /** Revert risk penalty in basis points (5% = 500 bps). */
 export const CONFIG_DEFAULT_REVERT_RISK_BPS = BigInt(_num("REVERT_RISK_BPS", "REVERT_RISK_BPS", 500));
 
-/** Minimum net profit threshold in MATIC wei (≈ $0.50 at ~2500 MATIC/ETH). */
-export const CONFIG_DEFAULT_MIN_PROFIT_WEI = _bigint("MIN_PROFIT_WEI_M", "MIN_PROFIT_WEI_M", 500000000000000000n);
+/** Minimum net profit threshold in MATIC wei (≈ $0.001 at current MATIC prices). */
+export const CONFIG_DEFAULT_MIN_PROFIT_WEI = _bigint("MIN_PROFIT_WEI", "MIN_PROFIT_WEI", 1000000000000000n);
 
 /** Gas buffer multiplier in basis points (105 = 5% buffer). */
 export const CONFIG_DEFAULT_GAS_BUFFER_BPS = _num("GAS_BUFFER_BPS", "GAS_BUFFER_BPS", 105);

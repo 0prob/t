@@ -311,6 +311,24 @@ export class PriceOracle {
     return this._rates.get(key) ?? 0n;
   }
 
+  /**
+   * Get the best available rate: fresh if within maxAgeMs, otherwise
+   * fall back to any cached rate within staleFallbackMs. This prevents
+   * transient oracle gaps from blocking execution while still rejecting
+   * tokens with no history at all.
+   */
+  getFreshWithStaleFallback(tokenAddress: string, maxAgeMs = 30_000, staleFallbackMs = 300_000) {
+    const key = tokenAddress.toLowerCase();
+    const freshRate = this.getFreshRate(tokenAddress, maxAgeMs);
+    if (freshRate > 0n) return freshRate;
+    // Fall back to any cached rate within the stale window
+    const updatedAt = this._updatedAtByToken.get(key) ?? 0;
+    if (updatedAt > 0 && Date.now() - updatedAt <= staleFallbackMs) {
+      return this._rates.get(key) ?? 0n;
+    }
+    return 0n;
+  }
+
   isFresh(maxAgeMs = 30_000) {
     return this._updatedAt > 0 && Date.now() - this._updatedAt <= maxAgeMs;
   }

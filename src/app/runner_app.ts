@@ -360,6 +360,7 @@ export function createRunnerApp({
   const bootModeCoordinator = bootSurface.bootModeCoordinator;
   return createRunnerMainController({
     tuiMode: options.tuiMode,
+    liveMode: options.liveMode,
     bootModeCoordinator,
     startupCoordinator,
     setRuntime: (initializedRuntime) => {

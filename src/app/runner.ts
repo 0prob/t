@@ -2146,6 +2146,7 @@ type MainWorkerPoolLike = {
 
 type RunnerMainDeps<Registry, Repositories> = {
   tuiMode: boolean;
+  liveMode: boolean;
   bootModeCoordinator: {
     startOperatorSurface: (tuiMode: boolean) => Promise<unknown>;
     runAfterBootstrap: () => Promise<unknown>;
@@ -2212,6 +2213,30 @@ export function createRunnerMainController<Registry, Repositories>(deps: RunnerM
     await deps.bootModeCoordinator.startOperatorSurface(deps.tuiMode);
 
     deps.setRuntime(deps.startupCoordinator.initializeRuntime());
+
+    // Warn if RPC roles share a single endpoint in live mode — hurts race competitiveness
+    if (deps.liveMode) {
+      try {
+        // Dynamic import to avoid hard dependency at module level
+        const { GAS_ESTIMATION_RPC_URL, EXECUTION_RPC_URL, POLYGON_RPC_URL } = await import("../config/rpc_env.ts");
+        if (GAS_ESTIMATION_RPC_URL === POLYGON_RPC_URL) {
+          deps.log("RPC role not separated", "warn", {
+            event: "rpc_role_not_separated",
+            role: "GAS_ESTIMATION_RPC",
+            message: "GAS_ESTIMATION_RPC falls back to POLYGON_RPC — gas estimation shares read connection, risking rate-limit cross-contamination and inaccurate pending-state simulation. Set a dedicated GAS_ESTIMATION_RPC for best results.",
+          });
+        }
+        if (EXECUTION_RPC_URL === POLYGON_RPC_URL) {
+          deps.log("RPC role not separated", "warn", {
+            event: "rpc_role_not_separated",
+            role: "EXECUTION_RPC",
+            message: "EXECUTION_RPC falls back to POLYGON_RPC — transaction submission shares read connection, risking rate-limit contention and latency. Set a dedicated EXECUTION_RPC for best results.",
+          });
+        }
+      } catch {
+        // Config module may not be importable in all environments; skip warning silently.
+      }
+    }
 
     registerShutdownSignals(deps.processLike, deps.shutdown);
     startWorkerPoolIfConfigured({

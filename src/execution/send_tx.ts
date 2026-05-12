@@ -83,6 +83,7 @@ type PendingReceiptEntry = {
   txHash: string;
   fromAddress: string;
   builtTx: BuiltTx;
+  touchedPools: string[];  // Pool addresses touched by this tx (for conflict detection)
   publicClient: PublicClientLike;
   nonceManager?: NonceManagerLike;
   submittedAt: number;
@@ -145,11 +146,14 @@ type SendTxOptions = {
   signTransactionFn?: typeof signTransaction;
   sendPrivateTxFn?: (rawTx: RawTransaction, options: { allowPublicFallback: boolean }) => Promise<SubmissionResult>;
   sleepFn?: (ms: number) => Promise<unknown>;
+  /** Pool addresses touched by this transaction (for pending-conflict detection) */
+  touchedPools?: string[];
 };
 
 type SendTxBundleOptions = Omit<SendTxOptions, "sendPrivateTxFn" | "sleepFn"> & {
   sendPrivateBundleFn?: (rawTxs: RawTransaction[], options: { blockNumber: bigint }) => Promise<SubmissionResult>;
   sendPrivateTxFn?: (rawTx: RawTransaction, options: { allowPublicFallback: boolean }) => Promise<SubmissionResult>;
+  touchedPools?: string[];
 };
 
 export type SendTxResult = {
@@ -262,6 +266,21 @@ export function hasTrackedPendingTx(fromAddress?: string | null | undefined) {
   return false;
 }
 
+/**
+ * Get all pool addresses touched by pending transactions for a given account.
+ * Returns an empty array if no pending transactions exist.
+ */
+export function getPendingPools(fromAddress?: string | null | undefined): string[] {
+  const pools = new Set<string>();
+  for (const entry of pendingReceiptPolls.values()) {
+    if (fromAddress && entry.fromAddress.toLowerCase() !== fromAddress.toLowerCase()) continue;
+    for (const pool of entry.touchedPools) {
+      pools.add(pool.toLowerCase());
+    }
+  }
+  return [...pools];
+}
+
 async function pollTrackedReceipt(entry: PendingReceiptEntry) {
   try {
     const receipt = await entry.publicClient.getTransactionReceipt({ hash: asTxHash(entry.txHash) });
@@ -341,11 +360,12 @@ async function pollPendingReceipts() {
   }
 }
 
-function trackSubmittedTx(txHash: string, builtTx: BuiltTx, fromAddress: string, publicClient: PublicClientLike, nonceManager?: NonceManagerLike | null) {
+function trackSubmittedTx(txHash: string, builtTx: BuiltTx, fromAddress: string, publicClient: PublicClientLike, touchedPools: string[] = [], nonceManager?: NonceManagerLike | null) {
   pendingReceiptPolls.set(txHash, {
     txHash,
     builtTx,
     fromAddress,
+    touchedPools,
     publicClient: publicClient ?? undefined,
     nonceManager: nonceManager ?? undefined,
     submittedAt: Date.now(),
@@ -449,7 +469,7 @@ async function submitSignedTransactionsIndividually(
 
     txHashes.push(result.txHash);
     nonceManager?.confirm?.(fromAddress);
-    trackSubmittedTx(result.txHash, builtTxs[index], fromAddress, publicClient, nonceManager);
+    trackSubmittedTx(result.txHash, builtTxs[index], fromAddress, publicClient, [], nonceManager);
   }
 
   if (firstError || txHashes.length === 0) {
@@ -616,7 +636,7 @@ try {
   }, "Transaction submitted via multi-endpoint sniper");
 
   if (nonceManager?.confirm) nonceManager.confirm(fromAddress);
-  trackSubmittedTx(txHash, builtTx, fromAddress, publicClient, nonceManager);
+  trackSubmittedTx(txHash, builtTx, fromAddress, publicClient, options.touchedPools ?? [], nonceManager);
   submitError = null;
 } catch (err: unknown) {
   const error = err as { shortMessage?: unknown; message?: unknown } | null | undefined;
@@ -660,7 +680,7 @@ try {
       sendTxLogger.info({ txHash, method: result.method, attempt: attempt + 1 }, "Transaction submitted (fallback)");
 
       if (nonceManager?.confirm) nonceManager.confirm(fromAddress);
-      trackSubmittedTx(txHash, builtTx, fromAddress, publicClient, nonceManager);
+      trackSubmittedTx(txHash, builtTx, fromAddress, publicClient, options.touchedPools ?? [], nonceManager);
       submitError = null;
       break;
     } catch (fallbackErr: unknown) {
@@ -923,7 +943,7 @@ export async function sendTxBundle(builtTxs: BuiltTx[], config: SendTxConfig, op
       }
 
       for (let i = 0; i < txHashes.length; i++) {
-        trackSubmittedTx(txHashes[i], builtTxs[i], fromAddress, publicClient, nonceManager);
+        trackSubmittedTx(txHashes[i], builtTxs[i], fromAddress, publicClient, [], nonceManager);
       }
     }
 

@@ -28,6 +28,7 @@ contract ArbExecutorScript is Script {
             vm.envOr("QUICKSWAP_V3_FACTORY", DEFAULT_QUICKSWAP_V3_FACTORY);
         address kyberElasticFactory =
             vm.envOr("KYBER_ELASTIC_FACTORY", DEFAULT_KYBER_ELASTIC_FACTORY);
+        address initialOperator = vm.envOr("INITIAL_OPERATOR", address(0));
 
         vm.startBroadcast();
 
@@ -40,10 +41,24 @@ contract ArbExecutorScript is Script {
             kyberElasticFactory
         );
 
+        // Post-deployment operator setup (only works if broadcaster == owner)
+        if (initialOperator != address(0)) {
+            if (msg.sender == owner) {
+                executor.setOperator(initialOperator, true);
+                console2.log("Initial operator granted:", initialOperator);
+            } else {
+                console2.log("NOTE: INITIAL_OPERATOR was provided but broadcaster != owner.");
+                console2.log("      Call setOperator(operator, true) manually from the owner account.");
+            }
+        }
+
         vm.stopBroadcast();
 
         console2.log("ArbExecutor deployed:", address(executor));
         console2.log("owner:", owner);
+        if (initialOperator != address(0) && msg.sender == owner) {
+            console2.log("operator:", initialOperator);
+        }
         console2.log("balancerVault:", balancerVault);
         console2.log("uniswapV3Factory:", uniswapV3Factory);
         console2.log("sushiV3Factory:", sushiV3Factory);

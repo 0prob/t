@@ -23,7 +23,14 @@ type QuarantineEntry = {
   reason: string;
   failures: number;
   quarantinedAt: number;
+  failureClass: "transient" | "deterministic";
 };
+
+/** Short quarantine for transient failures (stale gas, stale rates, RPC glitches). */
+const TRANSIENT_QUARANTINE_MS = 30_000;
+
+/** Default quarantine for deterministic failures (unsupported tokens, malformed calldata). */
+const DETERMINISTIC_QUARANTINE_MS = 120_000;
 
 type FeeSnapshot = {
   baseFee: bigint;
@@ -49,6 +56,7 @@ type ExecutionClientConfig = {
 type ExecutionSubmitOptions = {
   awaitReceipt: boolean;
   skipDryRun?: boolean;
+  touchedPools?: string[];
 };
 
 type ExecutionSubmitResult = SendTxResult | SendTxBundleResult | {
@@ -89,7 +97,7 @@ type ExecutionCoordinatorDeps = {
   buildArbTx: (candidate: ExecutableCandidate, accounts: BuildArbTxConfig, options: BuildArbTxOptions) => Promise<BuiltTx>;
   sendTx: (tx: BuiltTx, clientConfig: ExecutionClientConfig, options: ExecutionSubmitOptions) => Promise<ExecutionSubmitResult>;
   sendTxBundle: (txs: BuiltTx[], clientConfig: ExecutionClientConfig, options: ExecutionSubmitOptions) => Promise<ExecutionSubmitResult>;
-  hasPendingExecution?: (fromAddress?: string | null | undefined) => boolean;
+  getPendingPools?: (fromAddress?: string | null | undefined) => string[];
   scalePriorityFeeByProfitMargin: (fees: FeeSnapshot, profitMarginBps: bigint) => PriorityFeeBid;
   refreshCandidateBeforeExecution?: (
     candidate: ExecutableCandidate,
@@ -264,9 +272,16 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
 
   function gasBudgetWei(candidate: ExecutableCandidate, tokenToMaticRate: bigint) {
     const minProfitTokens = minProfitInTokenUnits(tokenToMaticRate, deps.minProfitWei);
+    // Use the smaller of pre-gas netProfit and gas-adjusted netProfitAfterGas.
+    // netProfitAfterGas is a tighter bound — if the pre-assessment modeled gas,
+    // use it. If netProfitAfterGas is unavailable (legacy assessment), fall back
+    // to netProfit. This prevents the budget from being looser than the actual
+    // post-gas surplus, which reduces wasted build time on weak candidates.
     const netBeforeGas = candidate.assessment?.netProfit ?? 0n;
-    if (netBeforeGas <= minProfitTokens) return 0n;
-    return (netBeforeGas - minProfitTokens) * tokenToMaticRate;
+    const netAfterGas = candidate.assessment?.netProfitAfterGas ?? 0n;
+    const effectiveNet = netAfterGas > 0n && netAfterGas < netBeforeGas ? netAfterGas : netBeforeGas;
+    if (effectiveNet <= minProfitTokens) return 0n;
+    return (effectiveNet - minProfitTokens) * tokenToMaticRate;
   }
 
   function errorReason(err: unknown) {
@@ -359,32 +374,38 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
     return null;
   }
 
-  function quarantineExecutionRoute(path: ArbPathLike, reason: string, now = Date.now()) {
+  function quarantineExecutionRoute(path: ArbPathLike, reason: string, failureClass: "transient" | "deterministic" = "deterministic", now = Date.now()) {
     const key = executionRouteKey(path);
     const previous = executionRouteQuarantine.get(key);
     const failures = (previous?.failures ?? 0) + 1;
-    const until = now + deps.executionRouteQuarantineMs;
+    const quarantineMs = failureClass === "transient" ? TRANSIENT_QUARANTINE_MS : (deps.executionRouteQuarantineMs ?? DETERMINISTIC_QUARANTINE_MS);
+    const until = now + quarantineMs;
     executionRouteQuarantine.set(key, {
       until,
       reason,
       failures,
       quarantinedAt: now,
+      failureClass,
     });
     return { failures, until };
   }
 
-  function quarantineExecutionPools(path: ArbPathLike, reason: string, now = Date.now()) {
+  function quarantineExecutionPools(path: ArbPathLike, reason: string, failureClass: "transient" | "deterministic" = "deterministic", now = Date.now()) {
+    // Skip pool quarantine for transient failures — the pool state is fine,
+    // only the execution context (gas, rates, RPC) was temporarily unavailable.
+    if (failureClass === "transient") return { failures: 0, until: now };
     let maxFailures = 0;
     let maxUntil = now;
     for (const pool of executionPoolKeys(path)) {
       const previous = executionPoolQuarantine.get(pool);
       const failures = (previous?.failures ?? 0) + 1;
-      const until = now + deps.executionRouteQuarantineMs;
+      const until = now + (deps.executionRouteQuarantineMs ?? DETERMINISTIC_QUARANTINE_MS);
       executionPoolQuarantine.set(pool, {
         until,
         reason,
         failures,
         quarantinedAt: now,
+        failureClass,
       });
       maxFailures = Math.max(maxFailures, failures);
       maxUntil = Math.max(maxUntil, until);
@@ -392,9 +413,9 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
     return { failures: maxFailures, until: maxUntil };
   }
 
-  function quarantinePreparedCandidate(candidate: ExecutableCandidate, reason: string, source: string, meta: Record<string, unknown> = {}) {
-    const quarantine = quarantineExecutionRoute(candidate.path, reason);
-    const poolQuarantine = quarantineExecutionPools(candidate.path, reason);
+  function quarantinePreparedCandidate(candidate: ExecutableCandidate, reason: string, source: string, meta: Record<string, unknown> = {}, failureClass: "transient" | "deterministic" = "deterministic") {
+    const quarantine = quarantineExecutionRoute(candidate.path, reason, failureClass);
+    const poolQuarantine = quarantineExecutionPools(candidate.path, reason, failureClass);
     const payload = {
       event: "execute_quarantine_add",
       route: deps.fmtPath(candidate.path),
@@ -408,6 +429,7 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
       quarantineMs: Math.max(0, Math.max(quarantine.until, poolQuarantine.until) - Date.now()),
       reason,
       source,
+      failureClass,
       ...meta,
     };
     deps.log(`[runner] Quarantining route after execution preparation failure: ${reason}`, "warn", payload);
@@ -416,6 +438,7 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
       failures: quarantine.failures,
       until: quarantine.until,
       quarantinedAt: Date.now(),
+      failureClass,
     });
   }
 
@@ -497,7 +520,7 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
 
     const unsafeRouteReason = unsafeExecutionRouteReason(executionCandidate);
     if (unsafeRouteReason) {
-      quarantinePreparedCandidate(executionCandidate, unsafeRouteReason, "prepare_execution_token_safety");
+      quarantinePreparedCandidate(executionCandidate, unsafeRouteReason, "prepare_execution_token_safety", undefined, "deterministic");
       return null;
     }
 
@@ -507,7 +530,7 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
       quarantinePreparedCandidate(executionCandidate, quarantineReason, "prepare_execution_freshness", {
         ageMs: freshness.ageMs,
         skewMs: freshness.skewMs,
-      });
+      }, "transient");
       return null;
     }
 
@@ -518,7 +541,7 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
 
     let tokenToMaticRate = deps.getFreshTokenToMaticRate(executionCandidate.path.startToken);
     if (tokenToMaticRate <= 0n) {
-      quarantinePreparedCandidate(executionCandidate, "stale_or_missing_token_matic_rate", "prepare_execution_price");
+      quarantinePreparedCandidate(executionCandidate, "stale_or_missing_token_matic_rate", "prepare_execution_price", {}, "transient");
       return null;
     }
 
@@ -535,13 +558,15 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
           executionCandidate,
           refreshed.reason ?? "pre-execution candidate refresh rejected route",
           "prepare_execution_revalidation",
+          {},
+          "transient",
         );
         return null;
       }
       executionCandidate = refreshed.candidate;
       tokenToMaticRate = deps.getFreshTokenToMaticRate(executionCandidate.path.startToken);
       if (tokenToMaticRate <= 0n) {
-        quarantinePreparedCandidate(executionCandidate, "stale_or_missing_token_matic_rate", "prepare_execution_price");
+        quarantinePreparedCandidate(executionCandidate, "stale_or_missing_token_matic_rate", "prepare_execution_price", {}, "transient");
         return null;
       }
     }
@@ -566,7 +591,7 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
 
     const flashLoanValidationError = validateBuiltFlashLoanArbTx(executionCandidate, builtTx, onChainMinProfit);
     if (flashLoanValidationError) {
-      quarantinePreparedCandidate(executionCandidate, flashLoanValidationError, "prepare_execution_flash_loan_boundary");
+      quarantinePreparedCandidate(executionCandidate, flashLoanValidationError, "prepare_execution_flash_loan_boundary", {}, "deterministic");
       return null;
     }
 
@@ -587,6 +612,7 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
           preNetProfitAfterGas: executionCandidate.assessment.netProfitAfterGas?.toString?.(),
           postNetProfitAfterGas: postBuildAssessment.netProfitAfterGas?.toString?.(),
         },
+        "transient",
       );
       return null;
     }
@@ -655,7 +681,7 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
           // If this were a post-submission revert, wire getRevertReason here
           // with the actual calldata from the built transaction.
 
-          quarantinePreparedCandidate(candidate, finalReason, "prepare_execution_exception");
+          quarantinePreparedCandidate(candidate, finalReason, "prepare_execution_exception", {}, "transient");
           return null;
         }
       });
@@ -676,7 +702,10 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
 
       if (prepared.length === 1) {
         // Pre-execution route refresh already simulated this route — skip the redundant dry-run
-        return await deps.sendTx(prepared[0].builtTx, clientConfig, { awaitReceipt: false, skipDryRun: true });
+        const pools = prepared[0].best.path.edges
+          .map((e) => (e.poolAddress ?? "").toLowerCase())
+          .filter(Boolean);
+        return await deps.sendTx(prepared[0].builtTx, clientConfig, { awaitReceipt: false, skipDryRun: true, touchedPools: pools });
       }
 
       deps.log(`[runner] Bundling ${prepared.length} opportunities into one private bundle`, "info", {
@@ -702,8 +731,9 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
 
   async function executeBatchIfIdle(candidates: ExecutableCandidate[], source = "unknown") {
     // Atomic CAS: only one caller may pass this barrier.
-    // Both executionInFlight and hasPendingExecution are checked under the same
-    // lock slot to prevent the TOCTOU window between check-and-set.
+    // executionInFlight is checked under the lock slot to prevent the
+    // TOCTOU window between check-and-set. Pool-aware pending-tx gating
+    // happens inside the lock: non-overlapping routes can proceed.
     if (executionInFlight) {
       deps.log("[runner] Skipping execution while another execution is in flight", "warn", {
         event: "execute_skip", reason: "execution_in_flight", source,
@@ -712,12 +742,60 @@ export function createExecutionCoordinator(deps: ExecutionCoordinatorDeps) {
     }
     executionInFlight = true;
     try {
-      if (deps.hasPendingExecution?.()) {
-        deps.log("[runner] Skipping execution — pending transaction detected", "warn", {
-          event: "execute_skip", reason: "pending_transaction_in_flight", source,
-        });
-        return { submitted: false, error: "pending transaction already in flight" };
+      // --- Pool-aware pending-transaction gating ---
+      // Instead of a binary block, allow non-overlapping opportunities to proceed.
+      // Routes that share pools with pending txs are skipped (nonce conflict risk);
+      // routes with zero pool overlap are safe to execute concurrently.
+      const fromAddress = deps.executorAddress;
+      const pendingPools = fromAddress ? deps.getPendingPools?.(fromAddress) ?? [] : [];
+      const hasOverlap = pendingPools.length > 0;
+
+      if (hasOverlap) {
+        const nonOverlapping: Array<{ candidate: ExecutableCandidate; index: number }> = [];
+        const overlapping: Array<{ index: number; pools: string[] }> = [];
+
+        for (let i = 0; i < candidates.length; i++) {
+          const candidate = candidates[i];
+          const pools = (candidate.path.edges ?? [])
+            .map((e) => (e.poolAddress ?? "").toLowerCase())
+            .filter(Boolean);
+          const shared = pools.some((p) => pendingPools.includes(p));
+          if (shared) {
+            overlapping.push({ index: i, pools });
+          } else {
+            nonOverlapping.push({ candidate, index: i });
+          }
+        }
+
+        if (nonOverlapping.length === 0) {
+          deps.log("[runner] Skipping execution — all candidates overlap with pending transaction pools", "warn", {
+            event: "execute_skip",
+            reason: "all_candidates_overlap_pending",
+            source,
+            candidates: candidates.length,
+            overlapping: overlapping.length,
+            pendingPools,
+          });
+          return { submitted: false, error: "all candidates overlap with pending tx pools" };
+        }
+
+        if (overlapping.length > 0) {
+          deps.log("[runner] Skipping overlapping candidates while pending tx in flight", "info", {
+            event: "execute_skip_overlapping",
+            reason: "pending_transaction_pool_conflict",
+            source,
+            total: candidates.length,
+            nonOverlapping: nonOverlapping.length,
+            overlapping: overlapping.length,
+            overlappingIndices: overlapping.map((o) => o.index),
+          });
+        }
+
+        // Execute only non-overlapping candidates
+        const filteredCandidates = nonOverlapping.map((n) => n.candidate);
+        return await executeMany(filteredCandidates);
       }
+
       return await executeMany(candidates);
     } finally {
       executionInFlight = false;

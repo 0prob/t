@@ -6,6 +6,7 @@ type TokenMetaLike = {
 type PriceOracleLike = {
   fromMatic: (tokenAddress: string, maticWei: bigint) => bigint;
   getFreshRate: (tokenAddress: string, maxAgeMs?: number) => bigint;
+  getFreshWithStaleFallback?: (tokenAddress: string, maxAgeMs?: number, staleFallbackMs?: number) => bigint;
 } | null;
 
 type PricingServiceDeps = {
@@ -64,7 +65,10 @@ function formatTokenAmount(amount: bigint, decimals: number, fractionDigits = 6)
 
 export function createPricingService(deps: PricingServiceDeps) {
   function getFreshTokenToMaticRate(tokenAddress: string) {
-    const rate = deps.getPriceOracle()?.getFreshRate?.(tokenAddress, deps.maxPriceAgeMs);
+    const oracle = deps.getPriceOracle();
+    // Prefer the stale-fallback method if available, otherwise fall back to getFreshRate.
+    const rate = oracle?.getFreshWithStaleFallback?.(tokenAddress, deps.maxPriceAgeMs, 300_000)
+      ?? oracle?.getFreshRate?.(tokenAddress, deps.maxPriceAgeMs);
     return normalizeNonNegativeBigInt(rate);
   }
 

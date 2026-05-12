@@ -76,3 +76,5 @@ testComputeProfitConvertsGasToStartTokenUnits();
 testComputeProfitRejectsUnprofitableAfterGas();
 testExecutionProfitUsesNormalizedWeiMetadata();
 testExecutionProfitFallsBackForLegacyMetadata();
+
+import "./test_profitability_scenarios.ts";

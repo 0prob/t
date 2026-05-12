@@ -22,7 +22,7 @@ import { partitionFreshCandidates } from "../routing/filter_fresh_candidates.ts"
 import { routeKeyFromEdges } from "../routing/finder.ts";
 import { evaluatePathsParallel, optimizeInputAmount, simulateRoute } from "../routing/simulator.ts";
 import { buildArbTx } from "../execution/build_tx.ts";
-import { hasTrackedPendingTx, sendTx, sendTxBundle, type NonceManagerLike } from "../execution/send_tx.ts";
+import { hasTrackedPendingTx, getPendingPools, sendTx, sendTxBundle, type NonceManagerLike } from "../execution/send_tx.ts";
 import { scalePriorityFeeByProfitMargin } from "../execution/gas.ts";
 import type { RuntimeStateCache } from "../app/runner.ts";
 import type { PoolRecord } from "../state/warmup.ts";
@@ -170,7 +170,7 @@ export function buildRunnerOpportunityEngineConfig(deps: RunnerOpportunityEngine
       buildArbTx,
       sendTx,
       sendTxBundle,
-      hasPendingExecution: hasTrackedPendingTx,
+      getPendingPools,
       scalePriorityFeeByProfitMargin,
       refreshCandidateBeforeExecution: (candidate, context) =>
         refreshCandidateBeforeExecution(deps, candidate, context),
