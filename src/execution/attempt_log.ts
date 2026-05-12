@@ -55,6 +55,24 @@ export type AttemptLogEntry = {
 
 let attemptIdCounter = 0;
 
+// ─── Persistent sink ──────────────────────────────────────────
+// Optional write-through to a durable store (e.g. TxAttemptStore).
+// Registered once at startup; never throws back into the hot path.
+let _attemptLogSink: ((entry: AttemptLogEntry) => void) | null = null;
+
+/**
+ * Register a durable sink that receives every AttemptLogEntry written by
+ * logAttemptStage().  Call once at startup, e.g.:
+ *
+ *   import { TxAttemptStore } from "./tx_attempt_store.ts";
+ *   import { setAttemptLogSink } from "./attempt_log.ts";
+ *   const store = new TxAttemptStore(DB_PATH);
+ *   setAttemptLogSink(store.write.bind(store));
+ */
+export function setAttemptLogSink(sink: ((entry: AttemptLogEntry) => void) | null): void {
+  _attemptLogSink = sink;
+}
+
 export function nextAttemptId(prefix = "tx"): string {
   return `${prefix}_${++attemptIdCounter}_${Date.now()}`;
 }
@@ -78,6 +96,15 @@ export function logAttemptStage(entry: AttemptLogEntry): void {
     attemptLogger.debug({ ...entry, meta: redactPrivateKey(entry.meta) }, `attempt ${stage}: endpoint success`);
   } else {
     attemptLogger.info({ ...entry, meta: redactPrivateKey(entry.meta) }, `attempt ${stage}${outcome ? `: ${outcome}` : ""}`);
+  }
+
+  // Write to durable sink (non-blocking, swallows errors so logging never stalls execution)
+  if (_attemptLogSink) {
+    try {
+      _attemptLogSink(entry);
+    } catch {
+      // Sink errors must never surface into the hot execution path
+    }
   }
 }
 

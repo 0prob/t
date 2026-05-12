@@ -1,5 +1,5 @@
 import type { CandidateEntry } from "../arb/assessment.ts";
-import { ENABLE_PREDICTIVE_CACHE, getResourceTunedRunParameters, RESOURCE_TUNED_RUN_PARAMETERS } from "../config/index.ts";
+import { DB_PATH, ENABLE_PREDICTIVE_CACHE, getResourceTunedRunParameters, RESOURCE_TUNED_RUN_PARAMETERS } from "../config/index.ts";
 import { type RegistryRepositories } from "../db/repositories.ts";
 import { type RegistryService } from "../db/registry.ts";
 import { StateWatcher } from "../state/watcher.ts";
@@ -18,6 +18,9 @@ import { createRunnerWatcherAdapters } from "./runner.ts";
 import { createRunnerHydrationAdapters } from "./runner_hydration.ts";
 import { createRunnerOpportunityEngine, createRunnerOpportunityEngineWithPredictiveCache } from "./runner_opportunity_engine.ts";
 import { createPendingTxStateWatcher } from "../app/mempool_watcher.ts";
+import { TxAttemptStore } from "../execution/tx_attempt_store.ts";
+import { setAttemptLogSink } from "../execution/attempt_log.ts";
+import { logger } from "../utils/logger.ts";
 
 type ProcessSignalRegistrar = {
   on: (signal: string, listener: (...args: unknown[]) => void) => unknown;
@@ -58,6 +61,7 @@ export function createRunnerApp({
 
   let registry: RegistryService | null = null;
   let repositories: RegistryRepositories | null = null;
+  let txAttemptStore: TxAttemptStore | null = null;
   let opportunityEngine: ReturnType<typeof createRunnerOpportunityEngine> | null = null;
   let predictiveCacheApi: {
     notifyPoolStateChanged: (pools: Set<string>) => void;
@@ -361,6 +365,28 @@ export function createRunnerApp({
     setRuntime: (initializedRuntime) => {
       registry = initializedRuntime.registry;
       repositories = initializedRuntime.repositories;
+
+      // Initialize transaction attempt logging on first runtime assignment
+      if (!txAttemptStore) {
+        try {
+          txAttemptStore = new TxAttemptStore(DB_PATH);
+          setAttemptLogSink(txAttemptStore.write.bind(txAttemptStore));
+          logger.child({ component: "runner_app" }).info(
+            { dbPath: DB_PATH },
+            "Transaction attempt logging enabled"
+          );
+
+          // Prune rows older than 7 days, once per week (non-blocking background task)
+          setInterval(() => {
+            try { txAttemptStore?.prune(7); } catch { /* diagnostic infra, ignore */ }
+          }, 7 * 24 * 60 * 60 * 1000).unref?.();
+        } catch (err) {
+          logger.child({ component: "runner_app" }).warn(
+            { err: String(err) },
+            "Failed to initialize TxAttemptStore — attempt logging disabled"
+          );
+        }
+      }
     },
     processLike,
     shutdown,
