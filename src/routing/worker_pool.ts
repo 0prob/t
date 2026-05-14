@@ -41,6 +41,14 @@ const hasImportArg = (flag: string) => {
   return false;
 };
 const WORKER_EXEC_ARGV = hasImportArg("tsx") ? [...process.execArgv] : [...process.execArgv, "--import", "tsx"];
+// Ensure the loader is correctly resolved if we're running via tsx
+if (WORKER_EXEC_ARGV.includes("--import") && WORKER_EXEC_ARGV.includes("tsx")) {
+  const tsxPath = new URL("../../node_modules/tsx/dist/loader.mjs", import.meta.url).pathname;
+  const importIdx = WORKER_EXEC_ARGV.indexOf("tsx");
+  if (importIdx !== -1) {
+    WORKER_EXEC_ARGV[importIdx] = tsxPath;
+  }
+}
 const workerLogger = logger.child({ component: "worker_pool" });
 const STARTUP_OOM_FAILURE_LIMIT = 3;
 
@@ -664,7 +672,16 @@ export class WorkerPool {
     slot.busy = true;
     slot.currentJobId = id;
     const message = { id, ...data } as WorkerRequest;
-    slot.worker.postMessage(message);
+    try {
+      slot.worker.postMessage(message);
+    } catch (err) {
+      slot.busy = false;
+      slot.currentJobId = null;
+      if (pending) {
+        this._pending.delete(id);
+        pending.reject(new Error(`[worker_pool] Failed to postMessage to worker: ${(err as Error)?.message ?? String(err)}`));
+      }
+    }
   }
 
   async _evaluateOnSlot(
