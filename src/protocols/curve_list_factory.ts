@@ -241,12 +241,19 @@ export async function discoverCurveListedFactory({
     args: [BigInt(index)],
   }));
 
-  let poolListResults: { status: string; result?: unknown; error?: unknown }[];
+  let poolListResults: { status: string; result?: unknown; error?: unknown }[] = [];
   try {
-    poolListResults = (await multicallWithRetry({
-      contracts: poolListContracts,
-      allowFailure: true,
-    })) as { status: string; result?: unknown; error?: unknown }[];
+    const chunks = [];
+    for (let i = 0; i < poolListContracts.length; i += 100) {
+      chunks.push(poolListContracts.slice(i, i + 100));
+    }
+    for (const chunk of chunks) {
+      const chunkResults = (await multicallWithRetry({
+        contracts: chunk,
+        allowFailure: true,
+      })) as { status: string; result?: unknown; error?: unknown }[];
+      poolListResults.push(...chunkResults);
+    }
   } catch (error: unknown) {
     console.warn(`  [${protocolName}] Multicall for pool_list failed: ${errorMessage(error)}`);
     if (checkpointBlock != null) curveRegistry.setCheckpoint(protocolKey, checkpointBlock);
@@ -305,19 +312,26 @@ export async function discoverCurveListedFactory({
     args: [poolAddress],
   }));
 
-  let getCoinsResults: { status: string; result?: unknown; error?: unknown }[];
+  let getCoinsResults: { status: string; result?: unknown; error?: unknown }[] = [];
   if (getCoinsContracts.length > 0) {
     try {
-      getCoinsResults = (await multicallWithRetry({
-        contracts: getCoinsContracts,
-        allowFailure: true,
-      })) as { status: string; result?: unknown; error?: unknown }[];
+      // get_coins can be very slow on Curve factories; use small chunks to avoid RPC timeouts
+      const chunks = [];
+      for (let i = 0; i < getCoinsContracts.length; i += 5) {
+        chunks.push(getCoinsContracts.slice(i, i + 5));
+      }
+      for (const chunk of chunks) {
+        const chunkResults = (await multicallWithRetry({
+          contracts: chunk,
+          allowFailure: true,
+        })) as { status: string; result?: unknown; error?: unknown }[];
+        getCoinsResults.push(...chunkResults);
+      }
     } catch (error: unknown) {
       console.warn(`  [${protocolName}] Multicall for get_coins failed: ${errorMessage(error)}`);
-      getCoinsResults = [];
+      // If some chunks succeeded, we still have partial results.
+      // The loop below will handle missing results for failed chunks.
     }
-  } else {
-    getCoinsResults = [];
   }
 
   const newPoolEntries: ListedPoolEntry[] = [];

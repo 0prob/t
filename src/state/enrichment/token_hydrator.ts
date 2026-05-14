@@ -19,6 +19,7 @@ import { dynamicPublicClient, isEndpointCapabilityError } from "../../utils/rpc_
 import { logger } from "../../utils/logger.ts";
 import { getPoolTokens } from "../../utils/pool_record.ts";
 import { normalizeHydrationAddresses, normalizeTokenHydrationAddress } from "./token_hydrator_helpers.ts";
+import { isPolygonSystemContract } from "../../utils/identity.ts";
 import { throttledMap } from "./rpc.ts";
 
 // ─── HyperRPC client ──────────────────────────────────────────
@@ -289,7 +290,7 @@ export async function hydrateTokensWithDeps(
   // Filter to only addresses not yet in the DB — re-hydration is rare; this
   // check ensures a repeated discovery run is a no-op for existing tokens.
   const existing = registry.getTokenDecimals(normalizedAddresses);
-  const toFetch = normalizedAddresses.filter((address) => !existing.has(address));
+  const toFetch = normalizedAddresses.filter((address) => !existing.has(address) && !isPolygonSystemContract(address));
 
   if (toFetch.length === 0) {
     logger.debug(`[token_hydrator] ${normalizedAddresses.length} token(s) already in DB — skipping`);
