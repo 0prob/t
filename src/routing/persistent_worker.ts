@@ -22,12 +22,7 @@ import { rehydrateStateData } from "../db/registry_codec.ts";
 import { normalizeEvmAddress } from "../utils/pool_record.ts";
 import { errorMessage } from "../utils/errors.ts";
 import type { RouteState, RouteStateCache, SimulationPath } from "./simulation_types.ts";
-import type {
-  SerializedEnumeratedPath,
-  WorkerErrorResponse,
-  WorkerRequest,
-  WorkerStateObject,
-} from "./worker_messages.ts";
+import type { SerializedEnumeratedPath, WorkerErrorResponse, WorkerRequest, WorkerStateObject } from "./worker_messages.ts";
 
 if (!parentPort) throw new Error("persistent_worker must run in a Worker thread");
 

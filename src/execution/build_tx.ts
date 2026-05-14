@@ -23,11 +23,7 @@ import { routeExecutionCacheKey } from "../routing/route_identity.ts";
 import { getPathHopCount } from "../routing/path_hops.ts";
 import { normalizeEvmAddress } from "../utils/pool_record.ts";
 import { isSwapExecutionProtocol, normalizeProtocolKey } from "../protocols/classification.ts";
-import {
-  CONFIG_DEFAULT_SLIPPAGE_BPS,
-  CONFIG_DEFAULT_GAS_MULTIPLIER,
-  CONFIG_DEFAULT_MIN_PROFIT_WEI,
-} from "../config/index.ts";
+import { CONFIG_DEFAULT_SLIPPAGE_BPS, CONFIG_DEFAULT_GAS_MULTIPLIER, CONFIG_DEFAULT_MIN_PROFIT_WEI } from "../config/index.ts";
 
 // ─── Defaults ─────────────────────────────────────────────────
 
