@@ -149,9 +149,11 @@ export function createRunnerApp({ argv, env, processLike, exit }: RunnerAppDeps)
 
   const resourcePassDecision = () => {
     const currentPlan = getResourceTunedRunParameters();
-    return !currentPlan.allowIntensiveWork
-      ? { ok: false, reason: "thermal_critical", thermalState: currentPlan.thermalState }
-      : { ok: true, thermalState: currentPlan.thermalState };
+    if (currentPlan.allowIntensiveWork) {
+      return { ok: true, thermalState: currentPlan.thermalState };
+    }
+    const reason = currentPlan.reasons.length > 0 ? currentPlan.reasons[0] : "thermal_critical";
+    return { ok: false, reason, thermalState: currentPlan.thermalState };
   };
   async function guardedRunPass() {
     const decision = resourcePassDecision();

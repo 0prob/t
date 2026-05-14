@@ -100,10 +100,22 @@ type WarmupDeps = {
     onProgress: (completed: number, total: number, addr: string, rawState: V3PoolState | null) => void,
     fetchOptions?: V3FetchOptions,
   ) => Promise<V3StateMap>;
-  fetchAndNormalizeBalancerPool: (pool: PoolRecord) => Promise<{ addr: string; normalized: Record<string, unknown> }>;
-  fetchAndNormalizeCurvePool: (pool: PoolRecord) => Promise<{ addr: string; normalized: Record<string, unknown> }>;
-  fetchAndNormalizeDodoPool: (pool: PoolRecord) => Promise<{ addr: string; normalized: Record<string, unknown> }>;
-  fetchAndNormalizeWoofiPool: (pool: PoolRecord) => Promise<{ addr: string; normalized: Record<string, unknown> }>;
+  fetchAndNormalizeBalancerPool: (
+    pool: PoolRecord,
+    options?: { tokenDecimals?: Map<string, number> | null },
+  ) => Promise<{ addr: string; normalized: Record<string, unknown> }>;
+  fetchAndNormalizeCurvePool: (
+    pool: PoolRecord,
+    options?: { tokenDecimals?: Map<string, number> | null },
+  ) => Promise<{ addr: string; normalized: Record<string, unknown> }>;
+  fetchAndNormalizeDodoPool: (
+    pool: PoolRecord,
+    options?: { tokenDecimals?: Map<string, number> | null },
+  ) => Promise<{ addr: string; normalized: Record<string, unknown> }>;
+  fetchAndNormalizeWoofiPool: (
+    pool: PoolRecord,
+    options?: { tokenDecimals?: Map<string, number> | null },
+  ) => Promise<{ addr: string; normalized: Record<string, unknown> }>;
   throttledMap: <T, R>(items: T[], mapper: (item: T) => Promise<R>, concurrency: number) => Promise<R[]>;
   polygonHubTokens: Set<string>;
   hub4Tokens: Set<string>;
@@ -611,12 +623,14 @@ export function createWarmupManager(deps: WarmupDeps) {
         progressPhase: "balancer_progress",
         async fetch(group, stats) {
           let completed = 0;
+          const groupTokens = [...new Set(group.flatMap((pool) => deps.getPoolTokens(pool).map((t) => t.toLowerCase())))];
+          const tokenDecimals = deps.getRegistry()?.getTokenDecimals?.(groupTokens) ?? null;
           return deps.throttledMap(
             group,
             async (pool: PoolRecord) => {
               try {
                 const { addr, normalized } = await withTimeout(
-                  deps.fetchAndNormalizeBalancerPool(pool),
+                  deps.fetchAndNormalizeBalancerPool(pool, { tokenDecimals }),
                   WARMUP_POOL_TIMEOUT_MS,
                   `Balancer pool ${pool.pool_address} warmup timed out`,
                 );
@@ -644,12 +658,14 @@ export function createWarmupManager(deps: WarmupDeps) {
         progressPhase: "curve_progress",
         async fetch(group, stats) {
           let completed = 0;
+          const groupTokens = [...new Set(group.flatMap((pool) => deps.getPoolTokens(pool).map((t) => t.toLowerCase())))];
+          const tokenDecimals = deps.getRegistry()?.getTokenDecimals?.(groupTokens) ?? null;
           return deps.throttledMap(
             group,
             async (pool: PoolRecord) => {
               try {
                 const { addr, normalized } = await withTimeout(
-                  deps.fetchAndNormalizeCurvePool(pool),
+                  deps.fetchAndNormalizeCurvePool(pool, { tokenDecimals }),
                   WARMUP_POOL_TIMEOUT_MS,
                   `Curve pool ${pool.pool_address} warmup timed out`,
                 );
@@ -677,12 +693,14 @@ export function createWarmupManager(deps: WarmupDeps) {
         progressPhase: "dodo_progress",
         async fetch(group, stats) {
           let completed = 0;
+          const groupTokens = [...new Set(group.flatMap((pool) => deps.getPoolTokens(pool).map((t) => t.toLowerCase())))];
+          const tokenDecimals = deps.getRegistry()?.getTokenDecimals?.(groupTokens) ?? null;
           return deps.throttledMap(
             group,
             async (pool: PoolRecord) => {
               try {
                 const { addr, normalized } = await withTimeout(
-                  deps.fetchAndNormalizeDodoPool(pool),
+                  deps.fetchAndNormalizeDodoPool(pool, { tokenDecimals }),
                   WARMUP_POOL_TIMEOUT_MS,
                   `Dodo pool ${pool.pool_address} warmup timed out`,
                 );
@@ -710,12 +728,14 @@ export function createWarmupManager(deps: WarmupDeps) {
         progressPhase: "woofi_progress",
         async fetch(group, stats) {
           let completed = 0;
+          const groupTokens = [...new Set(group.flatMap((pool) => deps.getPoolTokens(pool).map((t) => t.toLowerCase())))];
+          const tokenDecimals = deps.getRegistry()?.getTokenDecimals?.(groupTokens) ?? null;
           return deps.throttledMap(
             group,
             async (pool: PoolRecord) => {
               try {
                 const { addr, normalized } = await withTimeout(
-                  deps.fetchAndNormalizeWoofiPool(pool),
+                  deps.fetchAndNormalizeWoofiPool(pool, { tokenDecimals }),
                   WARMUP_POOL_TIMEOUT_MS,
                   `WooFi pool ${pool.pool_address} warmup timed out`,
                 );

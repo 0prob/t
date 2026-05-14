@@ -170,7 +170,14 @@ async function runMulticall(contracts: readonly MulticallContract[]) {
     }
     if (hyperRpcMulticallDisabledAt === 0) {
       try {
-        return await hyperRpcMulticallClient.multicall({ contracts, allowFailure: true });
+        const results = await hyperRpcMulticallClient.multicall({ contracts, allowFailure: true });
+        // HyperRPC returns without error but all calls fail — fall back to RPC manager
+        // which may route through a different endpoint with working Multicall3 support.
+        if (Array.isArray(results) && results.length > 0 && results.every((r) => r?.status !== "success")) {
+          logger.warn("[token_hydrator] HyperRPC multicall returned all failures — falling back to RPC manager");
+          return await fallbackMulticallClient.multicall({ contracts, allowFailure: true });
+        }
+        return results;
       } catch (err) {
         if (isEndpointCapabilityError(err)) {
           hyperRpcMulticallAvailable = false;

@@ -9,7 +9,14 @@
  */
 
 import { errorMessage } from "../../utils/errors.ts";
-import { rpcManager, dynamicPublicClient, isEndpointCapabilityError, isRateLimitError, isRetryableError } from "../../utils/rpc_manager.ts";
+import {
+  rpcManager,
+  dynamicPublicClient,
+  isEndpointCapabilityError,
+  isRateLimitError,
+  isAuthError,
+  isRetryableError,
+} from "../../utils/rpc_manager.ts";
 import { RPC_MAX_RETRIES, RPC_BASE_DELAY_MS, RPC_MAX_DELAY_MS } from "../../config/index.ts";
 
 // ─── Warn about demo endpoint ──────────────────────────────────
@@ -106,6 +113,10 @@ export async function executeWithRpcRetry<T, TClient = unknown>(
     } catch (error) {
       lastError = error;
 
+      if (isNoDataReadContractError(error)) {
+        throw error;
+      }
+
       if (isEndpointCapabilityError(error)) {
         capabilityFailedUrls.add(endpoint.url);
         rpcManager.markMethodUnavailable(endpoint.url, rpcMethod);
@@ -124,6 +135,20 @@ export async function executeWithRpcRetry<T, TClient = unknown>(
         rpcManager.markRateLimited(endpoint.url, error, rpcMethod);
         if (attempt === 0 && onRateLimitMessage) {
           console.warn(onRateLimitMessage(rpcManagerShortUrl(endpoint.url), endpoint, attempt, "rate-limited"));
+        }
+        continue;
+      }
+
+      if (isAuthError(error)) {
+        capabilityFailedUrls.add(endpoint.url);
+        rpcManager.markMethodUnavailable(endpoint.url, rpcMethod);
+        if (attempt === 0 && onRateLimitMessage) {
+          console.warn(onRateLimitMessage(rpcManagerShortUrl(endpoint.url), endpoint, attempt, "auth-failed"));
+        }
+        if (capabilityFailedUrls.size >= rpcManager.endpoints.length || rpcManager.areAllEndpointsMethodUnavailable(rpcMethod)) {
+          throw new Error(
+            `RPC auth rejected by all configured endpoints (${rpcManager.endpoints.length}) for ${rpcMethod}: ${errorMessage(error)}`,
+          );
         }
         continue;
       }

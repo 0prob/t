@@ -67,13 +67,13 @@ const KYBER_LIQUIDITY_STATE_ABI = [
   },
 ];
 
-const KYBER_SWAP_FEE_BPS_ABI = [
+const KYBER_SWAP_FEE_UNITS_ABI = [
   {
     name: "swapFeeUnits",
     type: "function",
+    stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "uint24" }],
-    stateMutability: "view",
   },
 ];
 
@@ -303,8 +303,8 @@ export async function fetchPoolCore(
       providedSwapFeeBps ??
       (await readContractWithRetry({
         address: poolAddress,
-        abi: KYBER_SWAP_FEE_BPS_ABI,
-        functionName: "swapFeeBps",
+        abi: KYBER_SWAP_FEE_UNITS_ABI,
+        functionName: "swapFeeUnits",
         blockTag: options.blockTag,
       }));
 

@@ -141,11 +141,17 @@ async function fetchOracleState(wooracle: string, token: string): Promise<WoofiO
   };
 }
 
-async function fetchWoofiBaseState(poolAddress: string, wooracle: string, quoteDecimals: number, token: string): Promise<WoofiBaseState> {
+async function fetchWoofiBaseState(
+  poolAddress: string,
+  wooracle: string,
+  quoteDecimals: number,
+  token: string,
+  cachedBaseDecimals?: number,
+): Promise<WoofiBaseState> {
   const [tokenInfo, oracle, baseDecimals] = await Promise.all([
     fetchTokenInfo(poolAddress, token),
     fetchOracleState(wooracle, token),
-    readTokenDecimals(token),
+    cachedBaseDecimals != null ? Promise.resolve(cachedBaseDecimals) : readTokenDecimals(token),
   ]);
 
   return {
@@ -161,7 +167,7 @@ async function fetchWoofiBaseState(poolAddress: string, wooracle: string, quoteD
 
 export async function fetchWoofiPoolState(
   poolAddress: string = WOOFI_WOOPP_V2,
-  options: { tokens?: string[] } = {},
+  options: { tokens?: string[]; tokenDecimals?: Map<string, number> | null } = {},
 ): Promise<WoofiPoolState> {
   const addr = normalizeEvmAddress(poolAddress) ?? normalizeEvmAddress(WOOFI_WOOPP_V2)!;
   const [quoteToken, wooracleAddress] = await Promise.all([
@@ -177,13 +183,18 @@ export async function fetchWoofiPoolState(
     ...new Set((options.tokens ?? []).map((token) => normalizeEvmAddress(token)).filter((token): token is string => token != null)),
   ];
   const baseTokens = candidateTokens.filter((token) => token !== quoteToken);
-  const [quoteInfo, quoteDecimals] = await Promise.all([fetchTokenInfo(addr, quoteToken), readTokenDecimals(quoteToken)]);
+  const cachedQuoteDecimals = options.tokenDecimals?.get(quoteToken.toLowerCase());
+  const [quoteInfo, quoteDecimals] = await Promise.all([
+    fetchTokenInfo(addr, quoteToken),
+    cachedQuoteDecimals != null ? Promise.resolve(cachedQuoteDecimals) : readTokenDecimals(quoteToken),
+  ]);
 
   const baseResults = await throttledMap(
     baseTokens,
     async (token) => {
       try {
-        const state = await fetchWoofiBaseState(addr, wooracle, quoteDecimals, token);
+        const cachedBaseDecimals = options.tokenDecimals?.get(token.toLowerCase());
+        const state = await fetchWoofiBaseState(addr, wooracle, quoteDecimals, token, cachedBaseDecimals);
         if (state.reserve <= 0n || state.price <= 0n || !state.feasible) return null;
         return state;
       } catch (error) {

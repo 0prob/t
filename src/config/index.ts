@@ -322,8 +322,7 @@ const _defaultFreeRpcs = [
   "https://poly.api.pocket.network", // Pocket Network
   "https://polygon-bor-rpc.publicnode.com", // PublicNode
   "https://polygon-rpc.com", // Official Polygon public RPC
-  "https://rpc.ankr.com/polygon", // Ankr public
-  "https://polygon.llamarpc.com", // LlamaNodes public
+  "https://polygon.llarpc.com", // LlamaNodes public
   "https://polygon-public.nodies.app", // Nodies
   "https://polygon.api.onfinality.io/public", // OnFinality
   "https://tenderly.rpc.polygon.community", // Tenderly community RPC
@@ -331,7 +330,7 @@ const _defaultFreeRpcs = [
 
 const _paidRpc = process.env.POLYGON_RPC && !process.env.POLYGON_RPC.includes("/v2/demo") ? [process.env.POLYGON_RPC] : [];
 
-const _publicRpcUrls = _envRpcUrls.length ? _envRpcUrls : _defaultFreeRpcs;
+const _publicRpcUrls = _envRpcUrls.length ? [..._envRpcUrls, ..._defaultFreeRpcs] : _defaultFreeRpcs;
 
 const _allUrls = [..._paidRpc, ..._publicRpcUrls];
 

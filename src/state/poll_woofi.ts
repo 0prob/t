@@ -29,7 +29,7 @@ export async function fetchAndNormalizeWoofiPool(
 ): Promise<{ addr: string; normalized: RouteState }> {
   const addr = pool.pool_address.toLowerCase();
   const fallbackTokens = parsePoolTokens(pool.tokens);
-  const rawState = await fetchWoofiPoolState(addr, { tokens: fallbackTokens });
+  const rawState = await fetchWoofiPoolState(addr, { tokens: fallbackTokens, tokenDecimals: options.tokenDecimals });
   const tokens = Array.isArray(rawState.tokens) && rawState.tokens.length >= 2 ? rawState.tokens : fallbackTokens;
   const metadata = metadataWithTokenDecimals(pool, tokens, options.tokenDecimals);
   const normalized = normalizeWoofiState(addr, pool.protocol, tokens, rawState, metadata) as RouteState;

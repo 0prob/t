@@ -150,55 +150,60 @@ export function buildCurveRawState({ balances, A, fee, virtualPrice, fetchedAt =
 export async function fetchCurvePoolState(poolAddress: string, nCoins: number) {
   const PRECISION = 10n ** 18n;
 
-  // Try get_balances() first (fixed uint256[8] for legacy); fall back to
-  // dynamic uint256[] (stableswap-ng); then per-index balances() with
-  // int128 (legacy), uint256 (crypto), and stored_balances(uint256) (stableswap-ng).
+  // Try get_balances() variants in parallel, then per-index fallbacks.
+  // Parallel race avoids sequential 10s transport timeouts when a method
+  // is not supported — the failing calls reject quickly (no-data = no retry)
+  // while the working call wins the race.
   let balances: bigint[] = [];
   try {
-    const raw = await readContractWithRetry<CurveBalanceList>({
-      address: poolAddress,
-      abi: GET_BALANCES_ABI,
-      functionName: "get_balances",
-    });
-    balances = Array.from(raw as ArrayLike<string | number | bigint | boolean>)
-      .slice(0, nCoins)
-      .map((value) => BigInt(value));
-  } catch {
-    try {
-      const raw = await readContractWithRetry<unknown[]>({
+    const raw = await Promise.any([
+      readContractWithRetry<CurveBalanceList>({
+        address: poolAddress,
+        abi: GET_BALANCES_ABI,
+        functionName: "get_balances",
+      }).then((r) =>
+        Array.from(r as ArrayLike<string | number | bigint | boolean>)
+          .slice(0, nCoins)
+          .map((value) => BigInt(value)),
+      ),
+      readContractWithRetry<unknown[]>({
         address: poolAddress,
         abi: GET_BALANCES_DYN_ABI,
         functionName: "get_balances",
-      });
-      balances = Array.from(raw as ArrayLike<string | number | bigint | boolean>)
-        .slice(0, nCoins)
-        .map((value) => BigInt(value));
-    } catch {
-      // Fall back: per-index balance functions
-      const fallbackAbis = [BALANCE_INT128_ABI, BALANCE_UINT256_ABI, STORED_BALANCES_ABI];
-      for (const makeAbi of fallbackAbis) {
-        if (balances.length > 0) break;
-        const candidate: bigint[] = [];
-        let allOk = true;
-        for (let i = 0; i < nCoins; i++) {
-          try {
-            const b = await readContractWithRetry<CurveNumberish>({
-              address: poolAddress,
-              abi: makeAbi(),
-              functionName: makeAbi()[0].name,
-              args: [i],
-            });
-            candidate.push(BigInt(b));
-          } catch {
-            allOk = false;
-            break;
-          }
+      }).then((r) =>
+        Array.from(r as ArrayLike<string | number | bigint | boolean>)
+          .slice(0, nCoins)
+          .map((value) => BigInt(value)),
+      ),
+    ]);
+    balances = raw;
+  } catch {
+    // All get_balances() variants failed — try per-index balance functions.
+    // These are tried sequentially since each call fails quickly (no-data =
+    // no retry after Fix #2), and only 2-4 tokens need fetching.
+    const fallbackAbis = [BALANCE_INT128_ABI, BALANCE_UINT256_ABI, STORED_BALANCES_ABI];
+    for (const makeAbi of fallbackAbis) {
+      if (balances.length > 0) break;
+      const candidate: bigint[] = [];
+      let allOk = true;
+      for (let i = 0; i < nCoins; i++) {
+        try {
+          const b = await readContractWithRetry<CurveNumberish>({
+            address: poolAddress,
+            abi: makeAbi(),
+            functionName: makeAbi()[0].name,
+            args: [i],
+          });
+          candidate.push(BigInt(b));
+        } catch {
+          allOk = false;
+          break;
         }
-        if (allOk && candidate.length === nCoins) balances = candidate;
       }
-      if (balances.length === 0) {
-        balances = Array(nCoins).fill(0n);
-      }
+      if (allOk && candidate.length === nCoins) balances = candidate;
+    }
+    if (balances.length === 0) {
+      balances = Array(nCoins).fill(0n);
     }
   }
 

@@ -8,6 +8,7 @@
 import { createPublicClient, http } from "viem";
 import { polygon } from "viem/chains";
 
+import { FREE_RPC_URLS } from "../config/index.ts";
 import { errorMessage } from "./errors.ts";
 
 // ─── PublicClient proxy ──────────────────────────────────────
@@ -371,8 +372,6 @@ export class RpcManager {
 
 let _rpcInstance: RpcManager | null = null;
 
-const DEFAULT_FREE_RPCS = ["https://polygon-bor-rpc.publicnode.com", "https://rpc.ankr.com/polygon", "https://polygon.llamarpc.com"];
-
 export function getRpcManagerInstance(): RpcManager {
   if (!_rpcInstance) {
     const primary = (process.env.POLYGON_RPC || "").split(",").filter(Boolean);
@@ -380,7 +379,7 @@ export function getRpcManagerInstance(): RpcManager {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-    const urls = [...primary, ...extra, ...DEFAULT_FREE_RPCS];
+    const urls = [...primary, ...extra, ...FREE_RPC_URLS];
     _rpcInstance = new RpcManager([...new Set(urls)]);
     if (process.env.NODE_ENV !== "test") _rpcInstance.start();
   }
@@ -461,7 +460,9 @@ export function rpcManagerShortUrl(url: string): string {
 
 export function isRateLimitError(err: unknown): boolean {
   const msg = errorMessage(err).toLowerCase();
-  return msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("429") || msg.includes("exceeded");
+  const { status } = (err as Record<string, unknown>) || {};
+  if (status === 429) return true;
+  return msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("429");
 }
 
 export function isEndpointCapabilityError(err: unknown): boolean {
@@ -470,23 +471,38 @@ export function isEndpointCapabilityError(err: unknown): boolean {
     msg.includes("unsupported") ||
     msg.includes("not supported") ||
     msg.includes("method not found") ||
-    msg.includes("-32601") ||
-    msg.includes("-32000")
+    msg.includes("-32601")
   );
+}
+
+export function isAuthError(err: unknown): boolean {
+  const { status, statusCode } = (err as Record<string, unknown>) || {};
+  const httpStatus = Number(status ?? statusCode);
+  if (httpStatus === 401 || httpStatus === 403) return true;
+  const msg = errorMessage(err).toLowerCase();
+  return msg.includes("unauthorized") || msg.includes("forbidden") || msg.includes("401") || msg.includes("403");
 }
 
 export function isRetryableError(err: unknown): boolean {
   if (isRateLimitError(err)) return true;
   if (isEndpointCapabilityError(err)) return false;
+  if (isAuthError(err)) return false;
   const msg = errorMessage(err).toLowerCase();
+  // Check numeric HTTP status first (viem HttpRequestError.status, fetch Response.status)
+  const { status, statusCode } = (err as Record<string, unknown>) || {};
+  const httpStatus = Number(status ?? statusCode);
+  if (Number.isInteger(httpStatus) && httpStatus >= 400) {
+    return httpStatus >= 500; // only 5xx is retryable; 4xx (except 429 handled above) is not
+  }
   return (
     msg.includes("timeout") ||
     msg.includes("econnrefused") ||
     msg.includes("econnreset") ||
-    msg.includes("socket") ||
+    msg.includes("socket hang up") ||
     msg.includes("network") ||
-    msg.includes("5") ||
-    msg.includes("internal") ||
+    // HTTP 5xx status descriptions: only match multi-digit 50x patterns, not bare "5"
+    /\b50[0-9]\b|\b5[0-9]{2}\b/.test(msg) ||
+    msg.includes("-32000") ||
     msg.includes("header not found") ||
     msg.includes("missing trie node")
   );
