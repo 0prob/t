@@ -1,16 +1,16 @@
 # Graph Report - t  (2026-05-13)
 
 ## Corpus Check
-- 182 files · ~157,332 words
+- 182 files · ~157,617 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3250 nodes · 8598 edges · 266 communities (123 shown, 143 thin omitted)
+- 3253 nodes · 8607 edges · 279 communities (135 shown, 144 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 83 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7941e8a1`
+- Built from commit: `442f7e99`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -135,19 +135,19 @@
 - [[_COMMUNITY_Community 117|Community 117]]
 - [[_COMMUNITY_Community 118|Community 118]]
 - [[_COMMUNITY_Community 119|Community 119]]
-- [[_COMMUNITY_Community 136|Community 136]]
-- [[_COMMUNITY_Community 137|Community 137]]
-- [[_COMMUNITY_Community 138|Community 138]]
-- [[_COMMUNITY_Community 139|Community 139]]
-- [[_COMMUNITY_Community 140|Community 140]]
-- [[_COMMUNITY_Community 141|Community 141]]
-- [[_COMMUNITY_Community 142|Community 142]]
-- [[_COMMUNITY_Community 143|Community 143]]
-- [[_COMMUNITY_Community 144|Community 144]]
-- [[_COMMUNITY_Community 145|Community 145]]
-- [[_COMMUNITY_Community 146|Community 146]]
-- [[_COMMUNITY_Community 147|Community 147]]
-- [[_COMMUNITY_Community 148|Community 148]]
+- [[_COMMUNITY_Community 120|Community 120]]
+- [[_COMMUNITY_Community 121|Community 121]]
+- [[_COMMUNITY_Community 122|Community 122]]
+- [[_COMMUNITY_Community 123|Community 123]]
+- [[_COMMUNITY_Community 124|Community 124]]
+- [[_COMMUNITY_Community 125|Community 125]]
+- [[_COMMUNITY_Community 126|Community 126]]
+- [[_COMMUNITY_Community 127|Community 127]]
+- [[_COMMUNITY_Community 128|Community 128]]
+- [[_COMMUNITY_Community 129|Community 129]]
+- [[_COMMUNITY_Community 130|Community 130]]
+- [[_COMMUNITY_Community 131|Community 131]]
+- [[_COMMUNITY_Community 132|Community 132]]
 - [[_COMMUNITY_Community 149|Community 149]]
 - [[_COMMUNITY_Community 150|Community 150]]
 - [[_COMMUNITY_Community 151|Community 151]]
@@ -265,6 +265,19 @@
 - [[_COMMUNITY_Community 263|Community 263]]
 - [[_COMMUNITY_Community 264|Community 264]]
 - [[_COMMUNITY_Community 265|Community 265]]
+- [[_COMMUNITY_Community 266|Community 266]]
+- [[_COMMUNITY_Community 267|Community 267]]
+- [[_COMMUNITY_Community 268|Community 268]]
+- [[_COMMUNITY_Community 269|Community 269]]
+- [[_COMMUNITY_Community 270|Community 270]]
+- [[_COMMUNITY_Community 271|Community 271]]
+- [[_COMMUNITY_Community 272|Community 272]]
+- [[_COMMUNITY_Community 273|Community 273]]
+- [[_COMMUNITY_Community 274|Community 274]]
+- [[_COMMUNITY_Community 275|Community 275]]
+- [[_COMMUNITY_Community 276|Community 276]]
+- [[_COMMUNITY_Community 277|Community 277]]
+- [[_COMMUNITY_Community 278|Community 278]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `normalizeEvmAddress()` - 68 edges
@@ -290,455 +303,503 @@
 - `testComputeProfitRejectsUnprofitableAfterGas()` --calls--> `computeProfit()`  [EXTRACTED]
   scripts/run_all_tests.ts → src/arb/profit_compute.ts
 
-## Communities (266 total, 143 thin omitted)
+## Communities (279 total, 144 thin omitted)
 
 ### Community 0 - "Configuration & CLI"
-Cohesion: 0.05
-Nodes (100): assertDecodedLogsAligned(), buildDiscoveryScanQuery(), decodeDiscoveryLogs(), discoverCurveRemovals(), discoverPools(), DiscoverPoolsDeps, discoverPoolsWithDeps(), discoverProtocol() (+92 more)
+Cohesion: 0.06
+Nodes (89): BIGINT_ARRAY_FIELDS, BIGINT_SCALAR_FIELDS, isRecord(), JsonRecord, mapArbHistoryRow(), mapPoolMetaRow(), mapPoolRow(), mapStalePoolRow() (+81 more)
 
 ### Community 1 - "RPC & HyperSync Client"
 Cohesion: 0.06
-Nodes (95): computeFee(), computeGasAdjustedProfit(), computePoolPriceQuote(), computePrice(), computeSlippageBps(), computeSpotPriceScaled(), computeSqrtPrice(), computeVirtualAmountOutAfterFees() (+87 more)
+Nodes (79): RouteStateCache, CORE_STATE_KEYS, mergeStateIntoCache(), PendingEnrichmentMap, RegistryCacheSource, RegistryPoolRecord, reloadCacheFromRegistry(), createWatcherLogHandler() (+71 more)
 
 ### Community 2 - "Database Registry & SQLite"
-Cohesion: 0.06
-Nodes (79): HYPERSYNC_WATCHER_IDLE_SLEEP_MS, compareHyperSyncLogs(), hyperSyncLogIdentityKey(), HyperSyncRawLog, NormalizedHyperSyncLogMeta, normalizeHyperSyncLogMeta(), topicArrayFromHyperSyncLog(), HyperSyncGetResponse (+71 more)
+Cohesion: 0.02
+Nodes (82): BootModeDeps, BotTelemetryLike, CandidateLike, CounterMetric, createDefaultPriceOracle(), DecimalAwareFetcher, DefaultFeeSnapshot, defaultMetrics (+74 more)
 
 ### Community 3 - "Math - Uniswap V2/V3"
-Cohesion: 0.02
-Nodes (86): BootModeDeps, BotTelemetryLike, CandidateLike, CounterMetric, createDefaultPriceOracle(), createReorgRecoveryCoordinator(), createRunnerWatcherAdapters(), createWatcherBatchCoordinator() (+78 more)
+Cohesion: 0.05
+Nodes (49): CONFIG_DEFAULT_GAS_BUFFER_BPS, createExecutionClient(), createExecutionReadClient(), createGasEstimationClient(), EXECUTION_RPC_URL, GAS_ESTIMATION_RPC_URL, optionalEnv(), POLYGON_RPC_URL (+41 more)
 
 ### Community 4 - "Math - Curve StableSwap"
-Cohesion: 0.07
-Nodes (35): CachedPoolFee, CachedTokenMeta, RegistryAssetCache, RegistryAssetStore, AssetDatabase, assetStmt(), batchUpsertTokenMeta(), getAllTokenAddresses() (+27 more)
-
-### Community 5 - "Math - Balancer & DODO"
-Cohesion: 0.07
-Nodes (47): allMetrics(), arbsFound, candidateOptimizedCount, candidateProfitableCount, candidateProfitableYield, candidateShortlistSize, classifyEndpointType(), classifyWatcherHaltReason() (+39 more)
+Cohesion: 0.06
+Nodes (45): allMetrics(), arbsFound, candidateOptimizedCount, candidateProfitableCount, candidateProfitableYield, candidateShortlistSize, classifyWatcherHaltReason(), Counter (+37 more)
 
 ### Community 6 - "Math - WOOFi & FullMath"
-Cohesion: 0.07
-Nodes (55): routeConsoleOutputToLog(), createQuietPoolSweepCoordinator(), createDiscoveryRefreshCoordinator(), createRunnerHydrationAdapters(), FetchAndCacheOptions, LoggerFn, LogLevel, PoolState (+47 more)
+Cohesion: 0.08
+Nodes (16): DEFAULT_FREE_RPCS, getRpcManagerInstance(), initRpcManager(), LabeledCounter, LabeledHistogram, lazyMetrics(), normalizeRpcMethod(), observeRpcLatency() (+8 more)
 
 ### Community 7 - "Execution - Build & Send Tx"
-Cohesion: 0.09
-Nodes (56): stringifyWithBigInt(), StatementGetter, AddressRow, asLiquidityState(), assertPoolAddress(), batchRemovePools(), batchUpdateStates(), batchUpsertPools() (+48 more)
-
-### Community 9 - "Execution - Private Mempool"
-Cohesion: 0.07
-Nodes (54): ArbActivityTrackerOptions, CONSOLE_LEVELS, ConsoleMethod, createArbActivityTracker(), createCurrentFeeSnapshotReader(), createDecimalAwarePoolStateFetchers(), createInitialBotState(), createOperatorLogger() (+46 more)
-
-### Community 10 - "State Watcher - Core Loop"
-Cohesion: 0.11
-Nodes (33): ENRICH_CONCURRENCY, V3_POLL_MAX_POOLS, throttledMap(), fetchAndNormalizeDodoPool(), PollDodo, isAlgebraPool(), metadataFee(), PollUniv3 (+25 more)
-
-### Community 11 - "State Watcher - Polling"
-Cohesion: 0.07
-Nodes (47): CORE_STATE_KEYS, mergeStateIntoCache(), PendingEnrichmentMap, RegistryCacheSource, RegistryPoolRecord, reloadCacheFromRegistry(), requireCacheSource(), requireStateBatchWriter() (+39 more)
-
-### Community 12 - "State Watcher - Enrichment"
 Cohesion: 0.14
 Nodes (49): ACTIVITY_BY_EVENT, activityDetailForLog(), activityLabelForLog(), appendOperatorLog(), augmentQuietPoolHydrationAlignment(), buildHub4HydrationAlignment(), cleanText(), coreHubCooldownDetailForProtocol() (+41 more)
 
-### Community 13 - "State Watcher - Reorg"
-Cohesion: 0.12
-Nodes (39): ArbPathLike, AssessmentConfig, assessmentNetProfit(), AssessmentOptimizationOptions, assessRouteResult(), CandidateEntry, compareAssessmentProfit(), ExecutableCandidate (+31 more)
+### Community 8 - "Execution - Gas & Nonce"
+Cohesion: 0.1
+Nodes (46): BALANCER_VAULT_SWAP_ABI, CURVE_EXCHANGE_INT128_ABI, CURVE_EXCHANGE_INT128_RECEIVER_ABI, CURVE_EXCHANGE_UINT256_ABI, CURVE_EXCHANGE_UINT256_USE_ETH_ABI, DODO_SELL_BASE_ABI, DODO_SELL_QUOTE_ABI, ERC20_APPROVE_ABI (+38 more)
 
-### Community 14 - "State Watcher - Shards"
+### Community 9 - "Execution - Private Mempool"
+Cohesion: 0.08
+Nodes (46): ArbActivityTrackerOptions, CONSOLE_LEVELS, ConsoleMethod, createArbActivityTracker(), createCurrentFeeSnapshotReader(), createInitialBotState(), createOperatorLogger(), createPreparedCandidateErrorLogger() (+38 more)
+
+### Community 10 - "State Watcher - Core Loop"
+Cohesion: 0.11
+Nodes (40): AssessmentConfig, assessmentNetProfit(), AssessmentOptimizationOptions, assessRouteResult(), CandidateEntry, compareAssessmentProfit(), ExecutableCandidate, getAssessmentOptimizationOptions() (+32 more)
+
+### Community 11 - "State Watcher - Polling"
 Cohesion: 0.06
 Nodes (36): computeResourceTunedRunParameters, config/cli.ts, config/index.ts, configureWatcherCallbacks, createArbScheduler, createBootModeCoordinator, createBotTelemetry, createDiscoveryRefreshCoordinator (+28 more)
 
-### Community 15 - "Routing - Graph & Cycles"
+### Community 12 - "State Watcher - Enrichment"
+Cohesion: 0.15
+Nodes (38): compareHyperSyncLogs(), hyperSyncLogIdentityKey(), HyperSyncRawLog, NormalizedHyperSyncLogMeta, normalizeHyperSyncLogMeta(), topicArrayFromHyperSyncLog(), HyperSyncGetResponse, HyperSyncLogQuery (+30 more)
+
+### Community 13 - "State Watcher - Reorg"
 Cohesion: 0.12
 Nodes (36): BotTelemetryDeps, CandidateMetricsUpdate, CounterMetric, createBotTelemetry(), ObserverMetric, PassErrorStateUpdate, PassStateUpdate, defaultStartTui() (+28 more)
 
-### Community 16 - "Routing - Path Finding"
+### Community 14 - "State Watcher - Shards"
 Cohesion: 0.05
-Nodes (36): _allUrls, _bool(), CONFIG_DEFAULT_FLASH_LOAN_FEE_BPS, CONFIGURED_ROUTING_MAX_HOPS, CYCLE_REFRESH_INTERVAL_MS, DATA_DIR, _defaultFreeRpcs, __dirname (+28 more)
+Nodes (34): _allUrls, _bool(), CONFIGURED_ROUTING_MAX_HOPS, CYCLE_REFRESH_INTERVAL_MS, DATA_DIR, _defaultFreeRpcs, __dirname, DYNAMIC_PIVOT_TOKEN_LIMIT (+26 more)
+
+### Community 15 - "Routing - Graph & Cycles"
+Cohesion: 0.14
+Nodes (30): simulateDodoSwap(), annotatePath(), anyNonPositiveBigInt(), compareByPathLogWeight(), CycleEnumerator, dodoLogWeight(), edgeSpotLogWeight(), finalizeTopPaths() (+22 more)
+
+### Community 16 - "Routing - Path Finding"
+Cohesion: 0.12
+Nodes (35): HYPERSYNC_BATCH_SIZE, HYPERSYNC_MAX_ADDRESS_FILTER, HYPERSYNC_MAX_BLOCKS_PER_REQUEST, HYPERSYNC_MAX_FILTERS_PER_REQUEST, applyHistoricalHyperSyncQueryPolicy(), buildHyperSyncLogQuery(), DEFAULT_HYPERSYNC_BLOCK_FIELDS, DEFAULT_HYPERSYNC_LOG_FIELDS (+27 more)
 
 ### Community 17 - "Routing - Simulation"
-Cohesion: 0.14
-Nodes (31): createWatcherLogHandler(), WatcherLogDecoder, WatcherLogHandler, WatcherLogHandlerOptions, WatcherLogHandlerRegistry, WatcherLogHandlerStateAdapters, createWatcherProtocolHandlers(), WatcherProtocolHandlerDeps (+23 more)
+Cohesion: 0.13
+Nodes (23): ENRICH_CONCURRENCY, fetchAndNormalizeDodoPool(), PollDodo, fetchAndNormalizeWoofiPool(), PollWoofi, asBatchResult(), BatchFetchResult, BatchFetchSuccess (+15 more)
 
 ### Community 18 - "Routing - Worker Pool"
 Cohesion: 0.08
 Nodes (10): CHAINLINK_ABI, KNOWN_DECIMALS, PairQuote, PIVOT_TOKENS, PoolMetaLike, PoolQuote, PriceOracle, PriceOracleRegistry (+2 more)
 
 ### Community 19 - "Routing - Predictive Cache"
-Cohesion: 0.14
-Nodes (35): BIGINT_ARRAY_FIELDS, BIGINT_SCALAR_FIELDS, isRecord(), JsonRecord, mapArbHistoryRow(), mapPoolMetaRow(), mapPoolRow(), mapStalePoolRow() (+27 more)
+Cohesion: 0.16
+Nodes (27): decode(), enrichTokens(), protocol, decode(), protocol, createPairCreatedProtocol(), createRpcTokenProtocol(), createUniV3PoolProtocol() (+19 more)
 
 ### Community 20 - "Arbitrage - Discovery"
 Cohesion: 0.13
-Nodes (32): HYPERSYNC_BATCH_SIZE, HYPERSYNC_MAX_ADDRESS_FILTER, HYPERSYNC_MAX_BLOCKS_PER_REQUEST, HYPERSYNC_MAX_FILTERS_PER_REQUEST, applyHistoricalHyperSyncQueryPolicy(), buildHyperSyncLogQuery(), DEFAULT_HYPERSYNC_BLOCK_FIELDS, DEFAULT_HYPERSYNC_LOG_FIELDS (+24 more)
+Nodes (34): addPoolsForPackedV3Paths(), addPoolsForTokenPath(), buildPoolTokenPairIndex(), createPendingTxStateWatcher(), createPoolTokenPairIndexCache(), extractEncodedAddresses(), extractEncodedAddressesInOrder(), isV3FamilyProtocol() (+26 more)
 
 ### Community 21 - "Arbitrage - Opportunity Engine"
-Cohesion: 0.11
-Nodes (11): PoolMetaMap, RegistryMetaCache, RegistryPoolMeta, RegistryStatementFactory, loadPoolMetaCache(), ColumnInfo, hasColumn(), initRegistrySchema() (+3 more)
+Cohesion: 0.15
+Nodes (34): assertDecodedLogsAligned(), buildDiscoveryScanQuery(), decodeDiscoveryLogs(), discoverCurveRemovals(), discoverPools(), DiscoverPoolsDeps, discoverPoolsWithDeps(), discoverProtocol() (+26 more)
 
 ### Community 22 - "Arbitrage - Execution & Profit"
 Cohesion: 0.08
 Nodes (33): V3_BITMAP_MULTICALL_CHUNK_SIZE, V3_TICKS_MULTICALL_CHUNK_SIZE, FEE_ABI, fetchKyberInitializedTickWindow(), fetchKyberTickData(), fetchPoolCore(), fetchTickBitmap(), fetchTickBitmapWindow() (+25 more)
 
 ### Community 23 - "App Layer - Runner & Lifecycle"
+Cohesion: 0.13
+Nodes (25): HYPERSYNC_WATCHER_IDLE_SLEEP_MS, isRunning(), calculateAdaptiveSleepMs(), waitForWatcherHeightAdvance(), WaitForWatcherHeightAdvanceOptions, handleWatcherPollResponse(), runWatcherLoop(), WatcherLoopLogger (+17 more)
+
+### Community 24 - "App Layer - Telemetry & Logs"
 Cohesion: 0.1
 Nodes (32): logAttemptStage(), stageFromBuiltTx(), AccountLike, asTxHash(), classifySubmissionError(), clearTrackedReceipt(), DryRunResult, logFailure() (+24 more)
 
-### Community 24 - "App Layer - Telemetry & Logs"
-Cohesion: 0.13
-Nodes (33): addPoolsForPackedV3Paths(), addPoolsForTokenPath(), buildPoolTokenPairIndex(), createPendingTxStateWatcher(), createPoolTokenPairIndexCache(), extractEncodedAddresses(), extractEncodedAddressesInOrder(), isV3FamilyProtocol() (+25 more)
-
 ### Community 25 - "Protocols - Curve Factories"
 Cohesion: 0.16
-Nodes (28): CandidateAssessmentSummary, CandidateAssessmentWorkResult, evaluateCandidatePipeline(), recordAssessmentReject(), CandidateEntryLike, CandidatePathLike, CandidateResultLike, CandidateScoreInput (+20 more)
+Nodes (27): CandidateAssessmentSummary, CandidateAssessmentWorkResult, evaluateCandidatePipeline(), recordAssessmentReject(), CandidateEntryLike, CandidatePathLike, CandidateResultLike, CandidateScoreInput (+19 more)
 
 ### Community 26 - "Protocols - DODO & WOOFi"
-Cohesion: 0.15
-Nodes (31): getWoofiEdgeFeeBps(), V3_PROTOCOLS(), addPoolEdges(), buildGraph(), buildHubGraph(), buildPoolEdgeSnapshot(), createSwapEdge(), DEFAULT_HUB_4_TOKENS (+23 more)
-
-### Community 27 - "Protocols - Uniswap V3"
 Cohesion: 0.24
 Nodes (32): defaultRates(), asStateRecord(), asStateRecordOrNull(), BigIntLike, defaultRatesForDecimals(), nonNegativeBigInt(), normalizeBalancerState(), normalizeBigIntList() (+24 more)
 
 ### Community 28 - "Protocols - Balancer"
-Cohesion: 0.1
-Nodes (29): BigIntInput, bufferedGasLimit(), capGasFeesToBudget(), clampBigInt(), clearGasEstimateCache(), effectiveGasPriceWei(), ensureFreshGasOracle(), FeeSnapshot (+21 more)
+Cohesion: 0.16
+Nodes (29): getWoofiEdgeFeeBps(), V3_PROTOCOLS(), addPoolEdges(), buildGraph(), buildHubGraph(), buildPoolEdgeSnapshot(), createSwapEdge(), DEFAULT_HUB_4_TOKENS (+21 more)
 
-### Community 30 - "TUI & Metrics"
+### Community 29 - "Protocols - Contract Catalog"
 Cohesion: 0.15
 Nodes (30): compareDeferredHydrationCohortPriority(), compareDeferredHydrationPriority(), countTokenMatches(), hubClassBreakdown(), hubClassYieldBreakdown(), hydrationYield(), LoggerFn, LogLevel (+22 more)
 
-### Community 31 - "Solidity Contract"
+### Community 30 - "TUI & Metrics"
 Cohesion: 0.08
 Nodes (32): ArbPathLike, AssessmentLike, ExecutableCandidate, assessRouteResult, assessmentNetProfit, compareAssessmentProfit, getAssessmentOptimizationOptions, getOptimizationOptions (+24 more)
 
+### Community 31 - "Solidity Contract"
+Cohesion: 0.14
+Nodes (21): ArbPathLike, AssessmentLike, executionClient, NonceManagerClient, NonceManagerOptions, NonceManagerState, AffectedRoute, createPredictiveCacheAdapter() (+13 more)
+
 ### Community 32 - "Community 32"
-Cohesion: 0.19
-Nodes (25): EVAL_WORKER_THRESHOLD, WORKER_COUNT, EvaluatedRoute, EvaluatePathsOptions, RouteOptimizationOptions, RouteSimulationResult, RouteState, RouteStateCache (+17 more)
+Cohesion: 0.11
+Nodes (7): RegistryHistoryStore, ColumnInfo, hasColumn(), initRegistrySchema(), CompatDatabase, CompatStatement, SQLInputValue
 
 ### Community 33 - "Community 33"
 Cohesion: 0.14
 Nodes (27): HYPERSYNC_HTTP_REQ_TIMEOUT_MS, HYPERSYNC_MAX_RETRIES, HYPERSYNC_RETRY_BACKOFF_MS, HYPERSYNC_RETRY_BASE_MS, HYPERSYNC_RETRY_CEILING_MS, clientConfig, createHypersyncClient(), createHypersyncConfigError() (+19 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.15
-Nodes (26): assertWatcherStateField(), isWatcherTickState(), toMutableWatcherState(), canCommit(), createWatcherRefreshAdapters(), DEFAULT_WATCHER_REFRESHERS, refreshBalancerWatcherPool(), refreshCurveWatcherPool() (+18 more)
+Cohesion: 0.17
+Nodes (29): CONFIG_JSON_RPC_TIMEOUT_MS, FREE_RPC_URLS, BundleOptions, FAST_PUBLIC_RPCS, isAlreadyKnownSubmission(), jsonRpc(), JsonRpcErrorPayload, JsonRpcHeaders (+21 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.18
-Nodes (28): FREE_RPC_URLS, BundleOptions, FAST_PUBLIC_RPCS, isAlreadyKnownSubmission(), jsonRpc(), JsonRpcErrorPayload, JsonRpcHeaders, JsonRpcOptions (+20 more)
+Cohesion: 0.19
+Nodes (24): EVAL_WORKER_THRESHOLD, WORKER_COUNT, EvaluatedRoute, EvaluatePathsOptions, RouteOptimizationOptions, RouteSimulationResult, RouteState, SimulatedHopResult (+16 more)
 
 ### Community 36 - "Community 36"
-Cohesion: 0.21
-Nodes (27): annotatePath(), anyNonPositiveBigInt(), compareByPathLogWeight(), dodoLogWeight(), edgeSpotLogWeight(), finalizeTopPaths(), find2HopPaths(), find3HopPaths() (+19 more)
+Cohesion: 0.09
+Nodes (25): DECIMALS_ABI, decodeBytes32Text(), fetchMetaBatch(), getHyperRpcClient(), normalizeHydrationAddresses(), normalizeTokenHydrationAddress(), HydratedTokenMetadata, hydrateTokens() (+17 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.15
-Nodes (19): AssessmentLike, executionClient, NonceManagerClient, NonceManagerOptions, NonceManagerState, AffectedRoute, PredictiveCacheAdapterDeps, DEFAULT_OPTIONS (+11 more)
+Cohesion: 0.09
+Nodes (28): createHeartbeatController(), createOpportunityRouteCacheAdapters(), RunnerEnv, createRunnerApp(), ProcessSignal, ProcessSignalListener, ProcessSignalRegistrar, RunnerAppDeps (+20 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.16
-Nodes (26): booleanOption(), buildChunkStateObject(), buildEnumerationChunks(), buildStateDelta(), canStillDrainQueue(), collectChunkPoolAddresses(), collectChunkPoolState(), estimateEnumerationTokenWork() (+18 more)
+Cohesion: 0.14
+Nodes (26): routeConsoleOutputToLog(), createQuietPoolSweepCoordinator(), createDiscoveryRefreshCoordinator(), createRunnerHydrationAdapters(), FetchAndCacheOptions, LoggerFn, LogLevel, PoolState (+18 more)
 
 ### Community 39 - "Community 39"
-Cohesion: 0.19
-Nodes (24): compareByLogWeight(), CycleEnumerationOptions, CycleGraph, cycleSummary(), DEFAULTS, enumerateCycles(), enumerateCyclesDual(), enumerateCyclesForToken() (+16 more)
+Cohesion: 0.16
+Nodes (25): V3PoolState, assertWatcherStateField(), isWatcherTickState(), toMutableWatcherState(), canCommit(), DEFAULT_WATCHER_REFRESHERS, refreshBalancerWatcherPool(), refreshCurveWatcherPool() (+17 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.17
-Nodes (21): HYPERSYNC_TARGETED_BACKFILL_LOOKBACK_BLOCKS, HYPERSYNC_TARGETED_BACKFILL_MAX_POOLS, client, clearPendingWatcherEnrichment(), clearWatcherEnrichmentRetry(), enqueueWatcherEnrichment(), EnqueueWatcherEnrichmentOptions, enrichmentErrorMessage() (+13 more)
+Nodes (21): BalancerPoolTokensResult, BalancerReadContract, GET_POOL_TOKENS_ABI, getBalancerTokens(), normalizeAddressList(), CurveReadContract, GET_COINS_ABI, getCurveTokens() (+13 more)
 
 ### Community 41 - "Community 41"
+Cohesion: 0.15
+Nodes (25): createWatcherConfigurator(), configureWatcherCallbacks(), createArbScheduler(), createShutdownHandler(), LoggerFn, LogLevel, ShutdownReason, ShutdownRegistry (+17 more)
+
+### Community 42 - "Community 42"
+Cohesion: 0.16
+Nodes (22): HYPERSYNC_TARGETED_BACKFILL_LOOKBACK_BLOCKS, HYPERSYNC_TARGETED_BACKFILL_MAX_POOLS, client, clearPendingWatcherEnrichment(), clearWatcherEnrichmentRetry(), enqueueWatcherEnrichment(), EnqueueWatcherEnrichmentOptions, enrichmentErrorMessage() (+14 more)
+
+### Community 43 - "Community 43"
+Cohesion: 0.16
+Nodes (26): booleanOption(), buildChunkStateObject(), buildEnumerationChunks(), buildStateDelta(), canStillDrainQueue(), collectChunkPoolAddresses(), collectChunkPoolState(), estimateEnumerationTokenWork() (+18 more)
+
+### Community 44 - "Community 44"
 Cohesion: 0.18
 Nodes (23): errorMessage(), fetchAndNormalizeBalancerPool(), fetchBalancerPoolState(), fetchBalancerStableState(), GET_AMPLIFICATION_PARAMETER_ABI, GET_BPT_INDEX_ABI, GET_NORMALIZED_WEIGHTS_ABI, GET_POOL_ID_ABI (+15 more)
 
-### Community 42 - "Community 42"
-Cohesion: 0.15
-Nodes (24): configureWatcherCallbacks(), createArbScheduler(), createShutdownHandler(), LoggerFn, LogLevel, ShutdownReason, ShutdownRegistry, StoppableOracle (+16 more)
+### Community 45 - "Community 45"
+Cohesion: 0.24
+Nodes (21): CachedPoolFee, CachedTokenMeta, AssetDatabase, assetStmt(), batchUpsertTokenMeta(), getAllTokenAddresses(), getPoolFee(), getTokenDecimals() (+13 more)
 
-### Community 43 - "Community 43"
+### Community 46 - "Community 46"
 Cohesion: 0.19
 Nodes (22): PROTOCOL_ROUTERS, ROUTER_REQUIRED_PROTOCOLS, V3_SWAP_PROTOCOLS(), BALANCER_PROTOCOLS, CURVE_CRYPTO_PROTOCOLS, CURVE_PROTOCOLS, CURVE_STABLE_PROTOCOLS, DODO_PROTOCOLS (+14 more)
 
-### Community 44 - "Community 44"
-Cohesion: 0.1
-Nodes (23): DECIMALS_ABI, decodeBytes32Text(), fetchMetaBatch(), getHyperRpcClient(), HydratedTokenMetadata, hydrateTokens(), hydrateTokensWithDeps(), hyperRpcClient (+15 more)
-
-### Community 45 - "Community 45"
-Cohesion: 0.15
-Nodes (13): DEFAULT_FREE_RPCS, LabeledCounter, LabeledHistogram, lazyMetrics(), normalizeRpcMethod(), observeRpcLatency(), recordRpcError(), recordRpcSwitch() (+5 more)
-
-### Community 46 - "Community 46"
-Cohesion: 0.12
-Nodes (24): BALANCER_VAULT_SWAP_ABI, CURVE_EXCHANGE_INT128_ABI, CURVE_EXCHANGE_INT128_RECEIVER_ABI, CURVE_EXCHANGE_UINT256_ABI, CURVE_EXCHANGE_UINT256_USE_ETH_ABI, DODO_SELL_BASE_ABI, DODO_SELL_QUOTE_ABI, ERC20_APPROVE_ABI (+16 more)
-
 ### Community 47 - "Community 47"
+Cohesion: 0.2
+Nodes (22): compareByLogWeight(), CycleEnumerationOptions, CycleGraph, cycleSummary(), DEFAULTS, enumerateCycles(), enumerateCyclesDual(), enumerateCyclesForToken() (+14 more)
+
+### Community 48 - "Community 48"
+Cohesion: 0.22
+Nodes (20): computeFee(), computeGasAdjustedProfit(), computePoolPriceQuote(), computePrice(), computeSlippageBps(), computeSpotPriceScaled(), computeSqrtPrice(), computeVirtualAmountOutAfterFees() (+12 more)
+
+### Community 49 - "Community 49"
 Cohesion: 0.15
 Nodes (12): CachedAssessment, CachedEntry, CachedPath, CachedResult, hasValidPoolEdges(), isCachedEntry(), normalisePoolAddress(), normalizedRoutePools() (+4 more)
 
-### Community 48 - "Community 48"
-Cohesion: 0.1
-Nodes (24): createHeartbeatController(), createOpportunityRouteCacheAdapters(), RunnerEnv, createRunnerApp(), ProcessSignal, ProcessSignalListener, ProcessSignalRegistrar, RunnerAppDeps (+16 more)
-
-### Community 49 - "Community 49"
-Cohesion: 0.13
-Nodes (3): getRpcManagerInstance(), initRpcManager(), RpcManager
-
 ### Community 50 - "Community 50"
-Cohesion: 0.17
-Nodes (23): HYPERRPC_URL, ALGEBRA_GLOBAL_STATE_ABI, fetchV3PoolCoreSnapshots(), hyperRpcStateClient, requireStateMulticallClient(), stateHydratorLogger, StateMulticallClient, StateMulticallContract (+15 more)
-
-### Community 51 - "Community 51"
 Cohesion: 0.19
 Nodes (21): applySlippage(), computeProfit(), flashLoanFeeInTokenUnits(), gasCostInTokenUnits(), gasCostWei(), invalidAssessment(), isProfitable(), ProfitAssessment (+13 more)
+
+### Community 51 - "Community 51"
+Cohesion: 0.17
+Nodes (23): HYPERRPC_URL, ALGEBRA_GLOBAL_STATE_ABI, fetchV3PoolCoreSnapshots(), hyperRpcStateClient, requireStateMulticallClient(), stateHydratorLogger, StateMulticallClient, StateMulticallContract (+15 more)
 
 ### Community 52 - "Community 52"
 Cohesion: 0.12
 Nodes (5): buildEvaluationChunks(), isUsableSlot(), samePoolAddressSet(), summariseEvaluationChunks(), WorkerPool
 
-### Community 53 - "Community 53"
-Cohesion: 0.19
-Nodes (16): lowerCaseAddressList(), ArbHistoryOptions, ArbResultInput, ArbStatsByHopRow, ArbStatsTotalsRow, getArbHistory(), getArbStats(), HistoryDatabase (+8 more)
-
-### Community 55 - "Community 55"
+### Community 54 - "Community 54"
 Cohesion: 0.12
 Nodes (24): Binary Search Tick Navigation, Uniswap V3 Concentrated Liquidity, Tick Binary Decomposition, WeakMap Tick Sort Cache, MAX_SQRT_RATIO, MAX_TICK, MIN_SQRT_RATIO, MIN_TICK (+16 more)
 
+### Community 55 - "Community 55"
+Cohesion: 0.19
+Nodes (21): assertValidRouteForExecution(), buildArbTx(), BuildArbTxConfig, BuildArbTxOptions, buildTransferTx(), BuiltTx, BuiltTxMeta, ExecutionCall (+13 more)
+
 ### Community 56 - "Community 56"
+Cohesion: 0.21
+Nodes (21): multicallWithRetry(), hydrateNewTokens(), asCurveFactoryPool(), CurveFactoryPool, CurveFactoryRegistry, CurveTokenMetadataRegistry, DiscoverCurveFactoryOptions, discoverCurveListedFactory() (+13 more)
+
+### Community 57 - "Community 57"
+Cohesion: 0.18
+Nodes (18): throttledMap(), BigIntish, DODO_DIRECT_FEE_ABI, DODO_TOKEN_ABI, DodoFeeRates, DodoFetchResult, DodoPoolState, DodoStateMap (+10 more)
+
+### Community 58 - "Community 58"
+Cohesion: 0.11
+Nodes (22): WARMUP_V3_PROGRESS_PERSIST_BATCH_SIZE, V3FetchOptions, V3StateMap, EFFECTIVE_WARMUP_V3_PROGRESS_PERSIST_BATCH_SIZE, EMPTY_PROTOCOL_STATS, FetchAndCacheOptions, FetchLogContext, hasBigIntLikeValue() (+14 more)
+
+### Community 59 - "Community 59"
 Cohesion: 0.14
 Nodes (23): GasOracle, Balancer V2 Vault, ABI Fragments, Canonical Contract Addresses, Transaction Builder, Multihop Calldata Encoder, Gas Management, Gas Estimation Feedback Loop (+15 more)
 
-### Community 57 - "Community 57"
-Cohesion: 0.19
-Nodes (20): CONFIG_JSON_RPC_TIMEOUT_MS, ERC20_TRANSFER_ABI, assertValidRouteForExecution(), buildArbTx(), BuildArbTxConfig, BuildArbTxOptions, buildTransferTx(), BuiltTx (+12 more)
-
-### Community 58 - "Community 58"
-Cohesion: 0.12
-Nodes (18): buildRunnerOpportunityEngineConfig(), createRunnerOpportunityEngine(), createRunnerOpportunityEngineWithPredictiveCache(), FeeSnapshot, LoggerFn, refreshCandidateBeforeExecution(), RunnerOpportunityEngineDeps, uniqueRoutePools() (+10 more)
-
-### Community 59 - "Community 59"
+### Community 60 - "Community 60"
 Cohesion: 0.21
 Nodes (17): buildWatcherAddressFilter(), extendWatcherAddressFilter(), ExtendWatcherAddressFilterResult, updateWatcherAddressFilter(), WatcherAddressFilter, WatcherAddressFilterUpdate, normalizeWatchedAddresses(), initializeWatcherStart() (+9 more)
 
-### Community 60 - "Community 60"
-Cohesion: 0.23
-Nodes (21): asAddress(), callbackProtocolId(), deriveTightV3PriceLimit(), encodeBalancerHop(), encodeCurveHop(), encodeDodoHop(), encodeDynamicApprovalCall(), encodeKyberElasticHop() (+13 more)
-
 ### Community 61 - "Community 61"
-Cohesion: 0.21
-Nodes (8): RegistryCheckpointStore, checkpointStmt(), getCheckpoint(), getGlobalCheckpoint(), getRollbackGuard(), rollbackToBlock(), setCheckpoint(), setRollbackGuard()
-
-### Community 62 - "Community 62"
 Cohesion: 0.2
 Nodes (16): ArbPathLike, createTopologyCache(), EdgeLookupGraph, normalizeMaxAgeMs(), normalizeSerializedPath(), PersistentRouteCycleCache, SerializedPathLike, normaliseRouteSegment() (+8 more)
 
-### Community 63 - "Community 63"
-Cohesion: 0.18
-Nodes (4): normalizeGraphKey(), poolRouteKey(), RoutingGraph, tokenPairKey()
-
-### Community 64 - "Community 64"
-Cohesion: 0.12
-Nodes (13): A_ABI, BALANCE_ABI(), buildCurveRawState(), CurveBalanceList, CurveNumberish, CurveRawStateArgs, FEE_ABI, fetchAndNormalizeCurvePool() (+5 more)
-
-### Community 65 - "Community 65"
+### Community 62 - "Community 62"
 Cohesion: 0.24
 Nodes (17): fetchBlockRollbackGuard(), ProtocolDiscoveryContext, DEFAULT_POLYGON_TOKEN_CANDIDATES, discoverWoofiPool(), hasLiveWoofiBase(), parseConfiguredTokens(), readWoofiAddress(), registryTokenCandidates() (+9 more)
 
+### Community 63 - "Community 63"
+Cohesion: 0.17
+Nodes (19): readContractWithRetry(), toBigIntValue(), WOOFI_ORACLE_WITH_DECIMALS_ABI, ERC20_DECIMALS_ABI, fetchMultipleWoofiStates(), fetchOracleState(), fetchTokenInfo(), fetchWoofiBaseState() (+11 more)
+
+### Community 64 - "Community 64"
+Cohesion: 0.13
+Nodes (17): buildRunnerOpportunityEngineConfig(), createRunnerOpportunityEngine(), createRunnerOpportunityEngineWithPredictiveCache(), FeeSnapshot, LoggerFn, refreshCandidateBeforeExecution(), RunnerOpportunityEngineDeps, uniqueRoutePools() (+9 more)
+
+### Community 65 - "Community 65"
+Cohesion: 0.2
+Nodes (4): normalizeGraphKey(), poolRouteKey(), RoutingGraph, tokenPairKey()
+
 ### Community 66 - "Community 66"
 Cohesion: 0.18
-Nodes (11): createExecutionClient(), createExecutionReadClient(), createGasEstimationClient(), EXECUTION_RPC_URL, GAS_ESTIMATION_RPC_URL, optionalEnv(), POLYGON_RPC_URL, POLYGON_RPC_URLS (+3 more)
+Nodes (12): getSniper(), createRpcClient(), createSniperFromConfig(), RpcClient, shortenUrl(), SniperResult, SUBMISSION_METHOD, SubmissionError (+4 more)
+
+### Community 67 - "Community 67"
+Cohesion: 0.27
+Nodes (15): lowerCaseAddressList(), ArbHistoryOptions, ArbResultInput, ArbStatsByHopRow, ArbStatsTotalsRow, getArbHistory(), getArbStats(), HistoryDatabase (+7 more)
 
 ### Community 68 - "Community 68"
-Cohesion: 0.16
-Nodes (18): readContractWithRetry(), toBigIntValue(), WOOFI_ORACLE_WITH_DECIMALS_ABI, ERC20_DECIMALS_ABI, fetchMultipleWoofiStates(), fetchOracleState(), fetchTokenInfo(), fetchWoofiBaseState() (+10 more)
+Cohesion: 0.2
+Nodes (11): resolveWatcherPollError(), ResolveWatcherPollErrorOptions, WatcherPollErrorResolution, WatcherPollErrorTracker, WatcherPollRecoveryMeta, classifyWatcherPollError(), watcherErrorBackoffMeta(), watcherErrorBackoffMs() (+3 more)
 
 ### Community 69 - "Community 69"
-Cohesion: 0.25
-Nodes (16): BigIntish, DODO_DIRECT_FEE_ABI, DODO_TOKEN_ABI, DodoFeeRates, DodoFetchResult, DodoPoolState, DodoStateMap, fetchDodoFeeRates() (+8 more)
+Cohesion: 0.12
+Nodes (16): profitMarginBps(), CandidateRefreshContext, CandidateRefreshResult, ExecutionClientConfig, ExecutionCoordinatorDeps, ExecutionSubmitOptions, ExecutionSubmitResult, FeeSnapshot (+8 more)
 
 ### Community 70 - "Community 70"
+Cohesion: 0.29
+Nodes (14): getSqrtRatioAtTick(), getTickAtSqrtRatio(), getTickAtSqrtRatioInRange(), normaliseTickSearchBounds(), asPoolState(), asTickData(), getSortedTicks(), nextInitializedTickOptimized() (+6 more)
+
+### Community 71 - "Community 71"
 Cohesion: 0.15
 Nodes (14): executeWithRpcRetry(), MulticallClient, MulticallFailureResult, MulticallWithRetryParams, ReadContractClient, rpcManagerShortUrl(), RpcRetryDelayMessageFactory, RpcRetryEndpoint (+6 more)
 
-### Community 71 - "Community 71"
+### Community 72 - "Community 72"
 Cohesion: 0.22
 Nodes (16): V2_RESERVES_MULTICALL_CHUNK_SIZE, StateReadBlockTag, V2_GET_RESERVES_ABI, fetchMultipleV2States(), fetchMultipleV2StatesWithDeps(), fetchV2PoolState(), normalizeV2MulticallResult(), normalizeV2PoolAddress() (+8 more)
 
-### Community 72 - "Community 72"
+### Community 73 - "Community 73"
 Cohesion: 0.29
 Nodes (16): computeResourceTunedRunParameters(), cpuHeadroomConcurrency(), detectMaxCpuTemperatureC(), detectSystemResources(), detectThermalState(), memoryPressure(), nonNegativeFinite(), normalizeThermalMilliC() (+8 more)
 
-### Community 73 - "Community 73"
-Cohesion: 0.27
-Nodes (11): DiscoveryDeps, DiscoveryResult, normalizedPool, profitable, stateCache, displayScalar(), errorMessage(), objectErrorMessage() (+3 more)
-
-### Community 74 - "Community 74"
+### Community 75 - "Community 75"
 Cohesion: 0.22
 Nodes (15): createRegistryRepositories(), RegistryCheckpoint, RegistryCheckpointRepository, RegistryFeeRepository, RegistryHistoryRepository, RegistryMaintenanceRepository, RegistryMutationSummary, RegistryPoolRecord (+7 more)
 
-### Community 75 - "Community 75"
-Cohesion: 0.18
-Nodes (10): getSniper(), createRpcClient(), createSniperFromConfig(), RpcClient, shortenUrl(), SniperResult, SUBMISSION_METHOD, SubmissionError (+2 more)
-
 ### Community 76 - "Community 76"
-Cohesion: 0.12
-Nodes (15): profitMarginBps(), CandidateRefreshContext, CandidateRefreshResult, ExecutionClientConfig, ExecutionCoordinatorDeps, ExecutionSubmitOptions, ExecutionSubmitResult, FeeSnapshot (+7 more)
-
-### Community 77 - "Community 77"
-Cohesion: 0.26
-Nodes (12): BalancerPoolTokensResult, BalancerReadContract, GET_POOL_TOKENS_ABI, getBalancerTokens(), normalizeAddressList(), CurveReadContract, GET_COINS_ABI, getCurveTokens() (+4 more)
-
-### Community 78 - "Community 78"
 Cohesion: 0.17
 Nodes (12): minProfitInTokenUnits(), getPendingPools(), testComputeProfitGasCostScalesWithRate(), testComputeProfitRejectsWithMinNetProfit(), testComputeProfitZeroGasCostWhenNoGasInfo(), testGasBudgetFallsBackToNetProfit(), testGasBudgetPrefersNetProfitAfterGas(), testGasBudgetRejectsBelowMinProfit() (+4 more)
 
+### Community 77 - "Community 77"
+Cohesion: 0.23
+Nodes (14): EvaluationResult, SerializedEvaluationEdge, SerializedEvaluationPath, SerializedTopologyEdge, WorkerAckResponse, WorkerEnumeratePayload, WorkerEnumerateResponse, WorkerEvaluatePayload (+6 more)
+
+### Community 78 - "Community 78"
+Cohesion: 0.53
+Nodes (10): divRoundingUp(), mulDiv(), mulDivRoundingUp(), getAmount0Delta(), getAmount1Delta(), getNextSqrtPriceFromAmount0RoundingUp(), getNextSqrtPriceFromAmount1RoundingDown(), getNextSqrtPriceFromInput() (+2 more)
+
 ### Community 79 - "Community 79"
-Cohesion: 0.25
-Nodes (13): EvaluationResult, SerializedEvaluationEdge, SerializedEvaluationPath, WorkerAckResponse, WorkerEnumeratePayload, WorkerEnumerateResponse, WorkerEvaluatePayload, WorkerEvaluateResponse (+5 more)
+Cohesion: 0.42
+Nodes (14): absDiff(), asPoolState(), BalancerPoolState, calculateBalancerStableInvariant(), exp(), getBalancerAmountIn(), getBalancerAmountOut(), getBalancerStableAmountOut() (+6 more)
 
 ### Community 80 - "Community 80"
+Cohesion: 0.17
+Nodes (14): buildDiscoveredPoolBatch(), compareDiscoveryOrder(), DiscoveredPoolCandidate, DiscoveryBatchEntry, discoveryLogger, DiscoveryRawLog, normalizeDiscoveryMetadata(), normalizeHyperSyncLogInteger() (+6 more)
+
+### Community 81 - "Community 81"
+Cohesion: 0.15
+Nodes (12): A_ABI, BALANCE_ABI(), buildCurveRawState(), CurveBalanceList, CurveNumberish, CurveRawStateArgs, FEE_ABI, fetchAndNormalizeCurvePool() (+4 more)
+
+### Community 82 - "Community 82"
+Cohesion: 0.17
+Nodes (8): DODO_DPP, DODO_DSP, DODO_DVM, createCurveListedFactoryProtocol(), CURVE_POOL_REMOVED, PROTOCOLS, V2_PROTOCOL_DEFS, V3_PROTOCOL_DEFS
+
+### Community 84 - "Community 84"
 Cohesion: 0.26
 Nodes (12): paths, profitable, rehydrateAndStoreState(), response, retained, serialised, serialiseEnumeratedPath(), stateEntries() (+4 more)
 
-### Community 82 - "Community 82"
+### Community 85 - "Community 85"
+Cohesion: 0.35
+Nodes (13): applyWoofiFee(), calcBaseAmountSellQuote(), calcQuoteAmountSellBase(), getBaseState(), getQuoteToken(), getWoofiAmountOut(), getWoofiFeeRate(), hasPositiveSwapFactor() (+5 more)
+
+### Community 86 - "Community 86"
+Cohesion: 0.41
+Nodes (12): asPoolState(), CurvePoolState, getCurveAmountIn(), getCurveAmountOut(), getD(), getY(), hasValidCurveIndexes(), simulateCurveSwap() (+4 more)
+
+### Community 87 - "Community 87"
+Cohesion: 0.14
+Nodes (8): createDecimalAwarePoolStateFetchers(), createRegistryReadAccess(), createRouteFreshnessReader(), createPricingService(), PriceOracleLike, PricingServiceDeps, TokenMetaLike, createRunnerMarketDataAdapters()
+
+### Community 90 - "Community 90"
+Cohesion: 0.16
+Nodes (14): CompatDatabase, CompatStatement, RegistryAssetStore, RegistryCheckpointStore, RegistryMetaCache, RegistryService, Registry SQLite schema — pools, pool_state, checkpoints, rollback_guard, token_meta, pool_fees, liquidity_events, arb_history, Reorg handling — rollbackToBlock deletes state/pools/liquidity_events past block, reactivates removed pools, resets checkpoints (+6 more)
+
+### Community 91 - "Community 91"
 Cohesion: 0.18
 Nodes (14): func:getRevertReason, mod:src/state/index.ts, mod:src/state/normalizer.ts, mod:src/state/pool_metadata.ts, mod:src/state/pool_record.ts, mod:src/state/reorg_detect.ts, mod:src/state/watcher.ts, mod:src/state/watcher_types.ts (+6 more)
 
-### Community 83 - "Community 83"
+### Community 92 - "Community 92"
+Cohesion: 0.32
+Nodes (10): seedNewPoolsIntoStateCache(), normalizeEvmAddress(), asPoolObject(), getPoolMetadata(), getPoolTokens(), hasZeroAddressToken(), metadataCache, parsePoolTokensValue() (+2 more)
+
+### Community 93 - "Community 93"
+Cohesion: 0.44
+Nodes (11): asPoolState(), divCeil(), divFloor(), DodoPoolState, generalIntegrate(), getDodoAmountOut(), getDodoGrossAmountOut(), mulFloor() (+3 more)
+
+### Community 94 - "Community 94"
+Cohesion: 0.31
+Nodes (8): V3_POLL_MAX_POOLS, isAlgebraPool(), metadataFee(), PollUniv3, V3PollerOptions, parsePoolMetadata(), fetchMultipleV3States(), V3PoolMeta
+
+### Community 95 - "Community 95"
 Cohesion: 0.27
 Nodes (12): clampNextBlockToExclusiveTarget(), fetchAllLogs(), fetchAllLogsWithClient(), HyperSyncPageResult, HyperSyncPaginationOptions, HyperSyncPaginationProgress, isTerminalBoundedCursor(), pageLogsFromResponse() (+4 more)
 
-### Community 85 - "Community 85"
+### Community 96 - "Community 96"
 Cohesion: 0.17
 Nodes (13): Repository facade — createRegistryRepositories wraps RegistryService into typed sub-repositories: pools, checkpoints, tokens, fees, history, maintenance, createRegistryRepositories, db/index.ts, registry.ts, registry_asset_store.ts, registry_assets.ts, registry_checkpoint_store.ts, registry_history_store.ts (+5 more)
 
-### Community 86 - "Community 86"
-Cohesion: 0.19
-Nodes (13): CompatDatabase, CompatStatement, RegistryAssetStore, RegistryHistoryStore, RegistryMetaCache, RegistryService, Arbitrage history — logArbResult inserts BigInt amounts as strings, getArbStats aggregates net_profit via JS BigInt to avoid SQL CAST precision loss, Registry SQLite schema — pools, pool_state, checkpoints, rollback_guard, token_meta, pool_fees, liquidity_events, arb_history (+5 more)
-
-### Community 87 - "Community 87"
+### Community 97 - "Community 97"
 Cohesion: 0.32
 Nodes (10): BalanceAllowance, ERC20_BALANCE_ABI, ERC20_META_ABI, fetchBalanceAndAllowance(), fetchTokenMetadata(), multicall(), MulticallCall, multicallChunked() (+2 more)
 
-### Community 88 - "Community 88"
-Cohesion: 0.24
-Nodes (8): CONFIG_DEFAULT_GAS_BUFFER_BPS, estimateGas(), estimateGas(), getGasClient(), simulateCall(), dryRun(), getRevertReason(), RevertContext
-
-### Community 89 - "Community 89"
+### Community 98 - "Community 98"
 Cohesion: 0.26
 Nodes (12): clampInteger(), computeResourceTunedRunParameters(), cpuHeadroomConcurrency(), detectMaxCpuTemperatureC(), detectSystemResources(), detectThermalState(), memoryPressure(), nonNegativeFinite() (+4 more)
 
-### Community 90 - "Community 90"
+### Community 99 - "Community 99"
+Cohesion: 0.27
+Nodes (5): PoolMetaMap, RegistryMetaCache, RegistryPoolMeta, RegistryStatementFactory, loadPoolMetaCache()
+
+### Community 100 - "Community 100"
 Cohesion: 0.23
 Nodes (12): Balancer Power Approximation (ln+exp), Curve StableSwap Invariant, Newton-Raphson Iteration, Balancer Weighted CP Invariant, calculateBalancerStableInvariant, getBalancerAmountIn, getBalancerAmountOut, getBalancerStableAmountOut (+4 more)
 
-### Community 91 - "Community 91"
+### Community 101 - "Community 101"
+Cohesion: 0.62
+Nodes (7): checkpointStmt(), getCheckpoint(), getGlobalCheckpoint(), getRollbackGuard(), rollbackToBlock(), setCheckpoint(), setRollbackGuard()
+
+### Community 103 - "Community 103"
 Cohesion: 0.29
 Nodes (11): balancer.ts, curve.ts, dodo.ts, full_math.ts, src/math, sqrt_price_math.ts, swap_math.ts, tick_math.ts (+3 more)
 
-### Community 92 - "Community 92"
+### Community 104 - "Community 104"
 Cohesion: 0.2
 Nodes (11): func:getPoolTokens, func:normalizeBalancerState, func:normalizeCurveState, func:normalizeDodoState, func:normalizeEvmAddress, func:normalizePoolState, func:normalizeV2State, func:normalizeV3State (+3 more)
 
-### Community 95 - "Community 95"
+### Community 106 - "Community 106"
 Cohesion: 0.22
 Nodes (8): AttemptEndpointResult, AttemptLogEntry, attemptLogger, AttemptOutcome, AttemptStage, nextAttemptId(), redactPrivateKey(), setAttemptLogSink()
 
-### Community 96 - "Community 96"
-Cohesion: 0.2
-Nodes (4): createPricingService(), PriceOracleLike, PricingServiceDeps, TokenMetaLike
-
-### Community 97 - "Community 97"
+### Community 108 - "Community 108"
 Cohesion: 0.22
 Nodes (9): RegistryPoolStore, batchUpsertPools, bigintToApproxNumber, Liquidity change detection — compares reserve/liquidity bigint values, records large_change/near_empty/disabled events, detectLiquidityChange, disablePool, removePool, bigint.ts (+1 more)
 
-### Community 98 - "Community 98"
+### Community 109 - "Community 109"
 Cohesion: 0.22
 Nodes (9): CachedPoolFee, CachedTokenMeta, RegistryAssetCache, Asset caching — RegistryAssetCache with tokenMetaCache, tokenDecimalsCache, poolFeeCache, lazy fetch-through, Topic normalization — normalizeTopic validates 64-char hex, topic0ForSignature caches viem-encoded event signatures, normalizeTokenDecimals, normalizeTopic, topic0ForSignature (+1 more)
 
-### Community 99 - "Community 99"
+### Community 110 - "Community 110"
 Cohesion: 0.32
 Nodes (7): adaptiveReceiptTimeoutMs(), expectedProfitWei(), parseUnsignedBigInt(), testComputeProfitConvertsGasToStartTokenUnits(), testComputeProfitRejectsUnprofitableAfterGas(), testExecutionProfitFallsBackForLegacyMetadata(), testExecutionProfitUsesNormalizedWeiMetadata()
 
-### Community 100 - "Community 100"
+### Community 111 - "Community 111"
 Cohesion: 0.32
 Nodes (8): DODO SolveQuadratic & GeneralIntegrate, DODO vPMM Pricing, DODO_RSTATE_ABOVE_ONE, DODO_RSTATE_BELOW_ONE, DODO_RSTATE_ONE, getDodoAmountOut, getDodoGrossAmountOut, simulateDodoSwap
 
-### Community 101 - "Community 101"
+### Community 112 - "Community 112"
 Cohesion: 0.32
 Nodes (8): applyHistoricalHyperSyncQueryPolicy, buildHyperSyncLogQuery, HyperSync Pagination — page loop with nextBlock cursor, archiveHeight, maxPages guard, consecutive empty early termination, fetchAllLogs, fetchAllLogsWithClient, paginate.ts, query_policy.ts, topics.ts
 
-### Community 102 - "Community 102"
+### Community 113 - "Community 113"
+Cohesion: 0.57
+Nodes (5): detectReorg(), pick(), RollbackGuardLike, storedRollbackGuard(), isRecord()
+
+### Community 114 - "Community 114"
+Cohesion: 0.52
+Nodes (5): FreshnessOptions, getPathFreshness(), lookupPoolState(), PathLike, StateCacheLike
+
+### Community 115 - "Community 115"
 Cohesion: 0.29
 Nodes (7): class:RpcEndpoint, class:RpcManager, const:dynamicPublicClient, const:rpcManager, func:isEndpointCapabilityError, func:isRateLimitError, func:isRetryableError
 
-### Community 104 - "Community 104"
-Cohesion: 0.53
-Nodes (4): CONFIG_GAS_ADJUSTMENT_ALPHA, getGasEstimateMultiplier(), resetGasEstimateMultiplier(), updateGasEstimateMultiplier()
-
-### Community 105 - "Community 105"
+### Community 116 - "Community 116"
 Cohesion: 0.53
 Nodes (4): AbiExpectation, CONTRACT_CATALOG, ContractCatalogEntry, UNISWAP_V2_PAIR_CREATED_EXPECTATION
 
-### Community 106 - "Community 106"
+### Community 117 - "Community 117"
+Cohesion: 0.53
+Nodes (4): CONFIG_GAS_ADJUSTMENT_ALPHA, getGasEstimateMultiplier(), resetGasEstimateMultiplier(), updateGasEstimateMultiplier()
+
+### Community 118 - "Community 118"
 Cohesion: 0.33
 Nodes (6): createDiscoveryCoordinator, decodeDiscoveryLogs, discoverPools, discoverPoolsWithDeps, buildDiscoveredPoolBatch, computePrice
 
-### Community 107 - "Community 107"
+### Community 119 - "Community 119"
 Cohesion: 0.47
 Nodes (6): BigInt codec — rehydrateStateData maps bigint fields per protocol class (V2, V3, CURVE, BALANCER, DODO, WOOFI), stringifyWithBigInt serializes, mapPoolRow, rehydrateStateData, stringifyWithBigInt, toBigInt, upsertPool
 
-### Community 108 - "Community 108"
-Cohesion: 0.33
-Nodes (6): RegistryCheckpointStore, Reorg handling — rollbackToBlock deletes state/pools/liquidity_events past block, reactivates removed pools, resets checkpoints, getCheckpoint, rollbackToBlock, setCheckpoint, setRollbackGuard
+### Community 120 - "Community 120"
+Cohesion: 0.7
+Nodes (3): ParsedRunnerArgs, parsePositiveInteger(), parseRunnerArgs()
 
-### Community 109 - "Community 109"
+### Community 121 - "Community 121"
 Cohesion: 0.4
 Nodes (5): Constant Product (x*y=k), getV2AmountIn, getV2AmountOut, quoteV2, simulateV2Swap
 
-### Community 110 - "Community 110"
+### Community 122 - "Community 122"
+Cohesion: 0.5
+Nodes (5): RegistryHistoryStore, Arbitrage history — logArbResult inserts BigInt amounts as strings, getArbStats aggregates net_profit via JS BigInt to avoid SQL CAST precision loss, getArbHistory, getArbStats, logArbResult
+
+### Community 123 - "Community 123"
 Cohesion: 0.4
 Nodes (5): comp:App, comp:Dashboard, func:signalSummary, func:startTui, type:BotState
 
-### Community 111 - "Community 111"
+### Community 124 - "Community 124"
 Cohesion: 0.5
 Nodes (4): WOOFi sPMM Pricing, WOOFi Two-Hop via Quote, getWoofiAmountOut, simulateWoofiSwap
 
-### Community 112 - "Community 112"
+### Community 125 - "Community 125"
 Cohesion: 0.5
 Nodes (4): class:Gauge, const:watcherHealth, func:recordWatcherHalt, func:setWatcherHealthy
 
-### Community 113 - "Community 113"
+### Community 126 - "Community 126"
 Cohesion: 0.5
 Nodes (4): func:getPoolMetadata, func:metadataWithRegistryTokenDecimals, func:metadataWithTokenDecimals, func:parsePoolMetadataValue
 
-### Community 114 - "Community 114"
+### Community 127 - "Community 127"
 Cohesion: 0.5
 Nodes (4): class:StateWatcher, func:detectReorg, type:MutableWatcherState, type:WatcherPoolMeta
 
-### Community 116 - "Community 116"
+### Community 129 - "Community 129"
 Cohesion: 1.0
 Nodes (3): mod:src/tui/App.tsx, mod:src/tui/index.tsx, mod:src/tui/types.ts
 
 ## Knowledge Gaps
-- **335 isolated node(s):** `targets`, `tests`, `watcherStateLogger`, `WatcherStateUpdateError`, `WatcherStateIntegrityContext` (+330 more)
+- **337 isolated node(s):** `targets`, `tests`, `watcherStateLogger`, `WatcherStateUpdateError`, `WatcherStateIntegrityContext` (+332 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **143 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **144 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `logger` connect `Community 37` to `Configuration & CLI`, `Math - Uniswap V2/V3`, `Math - Balancer & DODO`, `Community 38`, `Community 40`, `State Watcher - Polling`, `Community 44`, `Community 45`, `Community 75`, `Community 48`, `Community 50`, `Routing - Worker Pool`, `Arbitrage - Opportunity Engine`, `App Layer - Runner & Lifecycle`, `Community 58`, `Community 95`?**
-  _High betweenness centrality (0.046) - this node is a cross-community bridge._
-- **Why does `normalizeEvmAddress()` connect `Math - Curve StableSwap` to `Configuration & CLI`, `Database Registry & SQLite`, `Math - Uniswap V2/V3`, `Math - WOOFi & FullMath`, `Execution - Build & Send Tx`, `State Watcher - Core Loop`, `Routing - Predictive Cache`, `Arbitrage - Discovery`, `Arbitrage - Opportunity Engine`, `App Layer - Telemetry & Logs`, `Protocols - DODO & WOOFi`, `Protocols - Uniswap V3`, `Community 32`, `Community 38`, `Community 47`, `Community 57`, `Community 62`, `Community 63`, `Community 65`, `Community 68`, `Community 69`, `Community 80`?**
-  _High betweenness centrality (0.036) - this node is a cross-community bridge._
+- **Why does `logger` connect `Solidity Contract` to `Community 64`, `RPC & HyperSync Client`, `Database Registry & SQLite`, `Community 66`, `Community 36`, `Math - Curve StableSwap`, `Math - WOOFi & FullMath`, `Community 37`, `Community 32`, `Community 42`, `Community 43`, `Community 106`, `Community 80`, `Routing - Worker Pool`, `Community 51`, `Arbitrage - Opportunity Engine`, `Community 56`, `App Layer - Telemetry & Logs`?**
+  _High betweenness centrality (0.047) - this node is a cross-community bridge._
+- **Why does `normalizeEvmAddress()` connect `Community 92` to `Configuration & CLI`, `Database Registry & SQLite`, `State Watcher - Enrichment`, `Routing - Path Finding`, `Arbitrage - Discovery`, `Protocols - DODO & WOOFi`, `Protocols - Balancer`, `Community 35`, `Community 36`, `Community 43`, `Community 45`, `Community 49`, `Community 55`, `Community 56`, `Community 57`, `Community 61`, `Community 62`, `Community 63`, `Community 65`, `Community 80`, `Community 83`, `Community 84`, `Community 99`, `Community 114`?**
+  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+- **Why does `RegistryService` connect `Math - Balancer & DODO` to `Community 32`, `Database Registry & SQLite`, `Community 37`, `Community 75`, `Arbitrage - Opportunity Engine`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **Are the 23 inferred relationships involving `normalizeEvmAddress()` (e.g. with `normalisePoolAddress()` and `collectChunkPoolState()`) actually correct?**
   _`normalizeEvmAddress()` has 23 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 22 inferred relationships involving `normalizeProtocolKey()` (e.g. with `protocolSupportsRouting()` and `getProtocolKind()`) actually correct?**
   _`normalizeProtocolKey()` has 22 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `targets`, `tests`, `watcherStateLogger` to the rest of the system?**
-  _335 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _337 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Configuration & CLI` be split into smaller, more focused modules?**
-  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
-- **Should `RPC & HyperSync Client` be split into smaller, more focused modules?**
   _Cohesion score 0.06 - nodes in this community are weakly interconnected._

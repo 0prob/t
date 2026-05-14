@@ -113,21 +113,16 @@ export async function executeWithRpcRetry<T, TClient = unknown>(
   const rpcMethod = String(method || "unknown");
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    if (rpcManager.areAllEndpointsMethodUnavailable(rpcMethod)) {
-      throw new Error(
-        `RPC method unsupported by all configured endpoints (${rpcManager.endpoints.length}) for ${rpcMethod}`
-      );
-    }
-
-    // If every endpoint is currently rate-limited or cooling down, wait for
-    // the soonest one to recover before issuing the call. Without this, we
-    // burn all retry slots instantly on rapid-fire 429s and then throw even
-    // though a healthy endpoint would be available in a few seconds, or wake
-    // early and keep extending endpoint cooldowns under concurrent warmup.
     const waitMs = rpcManager.msUntilAnyEndpointAvailable(rpcMethod);
     if (waitMs > 0) {
       const jitterMs = Math.floor(Math.random() * 250);
       await new Promise((resolve) => setTimeout(resolve, waitMs + 50 + jitterMs));
+    }
+
+    if (rpcManager.areAllEndpointsMethodUnavailable(rpcMethod)) {
+      throw new Error(
+        `RPC method unsupported by all configured endpoints (${rpcManager.endpoints.length}) for ${rpcMethod}`
+      );
     }
 
     const endpoint = rpcManager.checkoutBestEndpoint(rpcMethod);

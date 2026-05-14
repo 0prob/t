@@ -352,11 +352,11 @@ export function normalizeCurveState(
   const normalizedTokens = normalizeStateTokenList(tokens);
   const n = normalizedTokens.length;
   const tokenDecimals = normalizeTokenDecimalsList(normalizedTokens, meta);
-  if (tokenDecimals.some(d => d == null)) {
-    console.warn(`[normalizer] normalizeCurveState: unknown token decimals for pool ${poolId}, returning null`);
-    return null;
-  }
-  const resolvedDecimals = tokenDecimals as number[];
+  const resolvedDecimals = tokenDecimals.map((d, i) => {
+    if (d != null) return d;
+    console.warn(`[normalizer] normalizeCurveState: unknown token decimals for token ${normalizedTokens[i]} in pool ${poolId}, assuming 18`);
+    return 18;
+  }) as number[];
   const maxDecimals = Math.max(...resolvedDecimals, 18);
   const derivedRates: bigint[] | null = maxDecimals <= 59
     ? resolvedDecimals.map((d) => 10n ** BigInt(18 + maxDecimals - d))

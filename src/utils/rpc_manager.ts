@@ -171,7 +171,6 @@ class RpcEndpoint {
     this.errorCooldownUntil = Date.now() + Math.max(cooldownMs, 5_000);
     this._backoffMs = Math.min(Math.max(cooldownMs * 2, 1_000), 120_000);
     this.consecutiveErrors++;
-    this.methodUnavailableUntil.set(method, Date.now() + 10_000);
     lazyMetrics().then((m) => {
       m?.rpcErrors.labels(`rate_limit:${method}`);
       m?.rpcLatencyMs.labels(method).observe(cooldownMs);
@@ -188,8 +187,10 @@ class RpcEndpoint {
 
   markSuccess(method = DEFAULT_RPC_METHOD) {
     this.consecutiveErrors = 0;
-    this._backoffMs = INITIAL_BACKOFF_MS;
-    this.errorCooldownUntil = 0;
+    if (!this.isRateLimited() && !this.isCoolingDown()) {
+      this._backoffMs = INITIAL_BACKOFF_MS;
+      this.errorCooldownUntil = 0;
+    }
   }
 
   isUnavailable() {
@@ -246,6 +247,11 @@ export class RpcManager {
     return this.endpoints.filter((ep) => !ep.isMethodUnavailable(method));
   }
 
+  _isEndpointFunctionallyDead(ep: RpcEndpoint, method: string) {
+    if (ep.isMethodUnavailable(method)) return true;
+    return false;
+  }
+
   _selectEndpoint(method = DEFAULT_RPC_METHOD) {
     return this.getBestEndpoint(method);
   }
@@ -258,16 +264,25 @@ export class RpcManager {
 
   // Rate limit check
   msUntilAnyEndpointAvailable(method = DEFAULT_RPC_METHOD) {
-    const candidates = this._methodAvailableEndpoints(method);
     const now = Date.now();
-    const soonest = Math.min(
-      ...candidates.map((ep) => Math.min(ep.errorCooldownUntil, ep.rateLimitedUntil))
-    );
-    return Number.isFinite(soonest) ? Math.max(0, soonest - now) : 0;
+    const allRecoveries = this.endpoints
+      .map((ep) => Math.min(
+        ep.rateLimitedUntil,
+        ep.errorCooldownUntil,
+        ep.methodUnavailableUntil.get(method) ?? 0,
+      ))
+      .filter((t) => t > now);
+    if (allRecoveries.length > 0) {
+      return Math.min(...allRecoveries) - now;
+    }
+    return 0;
   }
 
   checkoutBestEndpoint(method = DEFAULT_RPC_METHOD) {
     const ep = this.getBestEndpoint(method);
+    if (!ep) {
+      throw new Error(`No available RPC endpoint for method ${method}`);
+    }
     ep.inFlight++;
     const safetyTimer = setTimeout(() => {
       ep.inFlight = Math.max(0, ep.inFlight - 1);
@@ -308,24 +323,13 @@ export class RpcManager {
     }
   }
 
-  methodUnavailableCount(method = DEFAULT_RPC_METHOD) {
-    const key = normalizeRpcMethod(method);
-    return this.endpoints.filter((ep) => this._isMethodUnavailable(ep, key)).length;
-  }
-
   areAllEndpointsMethodUnavailable(method = DEFAULT_RPC_METHOD) {
-    return this.endpoints.length > 0 && this.methodUnavailableCount(method) >= this.endpoints.length;
+    if (this.endpoints.length === 0) return false;
+    return this.endpoints.every((ep) => this._isEndpointFunctionallyDead(ep, method));
   }
 
   getBestEndpointForRetry(method = DEFAULT_RPC_METHOD) {
     return this.getBestEndpoint(method);
-  }
-
-  _isMethodUnavailable(ep: RpcEndpoint, method: string) {
-    if (ep.consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) return true;
-    if (ep.isRateLimited()) return true;
-    if (ep.isMethodUnavailable(method)) return true;
-    return false;
   }
 
   getBestClient(method = DEFAULT_RPC_METHOD) {
@@ -377,14 +381,9 @@ export class RpcManager {
 let _rpcInstance: RpcManager | null = null;
 
 const DEFAULT_FREE_RPCS = [
-  "https://polygon.api.pocket.network",
   "https://polygon-bor-rpc.publicnode.com",
-  "https://polygon-rpc.com",
   "https://rpc.ankr.com/polygon",
   "https://polygon.llamarpc.com",
-  "https://polygon-public.nodies.app",
-  "https://polygon.api.onfinality.io/public",
-  "https://tenderly.rpc.polygon.community",
 ];
 
 export function getRpcManagerInstance(): RpcManager {

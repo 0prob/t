@@ -10,8 +10,9 @@
 import { createPublicClient, http, getAddress } from "viem";
 import { polygon } from "viem/chains";
 import { HYPERRPC_URL } from "../config/index.ts";
-import { dynamicPublicClient, isEndpointCapabilityError } from "../utils/rpc_manager.ts";
+import { isEndpointCapabilityError } from "../utils/rpc_manager.ts";
 import { logger } from "../utils/logger.ts";
+import { multicallWithRetry } from "./enrichment/rpc.ts";
 
 export type StateReadBlockTag = "latest" | "pending";
 type ViemAddress = `0x${string}`;
@@ -185,11 +186,18 @@ function successScalar(result: StateMulticallResult | null | undefined) {
 export async function stateMulticallWithFallback<T = StateMulticallResult[]>(
   params: StateMulticallParams,
 ): Promise<T> {
-  const fallbackMulticallClient = requireStateMulticallClient(dynamicPublicClient, "RPC manager");
   if (hyperRpcMulticallAvailable) {
-    const hyperRpcMulticallClient = requireStateMulticallClient(hyperRpcStateClient, "HyperRPC state");
     try {
-      return await hyperRpcMulticallClient.multicall<T>(params);
+      const hyperRpcMulticallClient = requireStateMulticallClient(hyperRpcStateClient, "HyperRPC state");
+      const results = await hyperRpcMulticallClient.multicall<T>(params);
+      if (Array.isArray(results) && results.length > 0 && results.every((r) => r?.status !== "success")) {
+        stateHydratorLogger.warn(
+          "[state_multicall_hydrator] HyperRPC returned all failures (likely unsupported eth_call); permanently disabled.",
+        );
+        hyperRpcMulticallAvailable = false;
+      } else {
+        return results;
+      }
     } catch (err) {
       if (isEndpointCapabilityError(err)) {
         hyperRpcMulticallAvailable = false;
@@ -205,7 +213,7 @@ export async function stateMulticallWithFallback<T = StateMulticallResult[]>(
     }
   }
 
-  return fallbackMulticallClient.multicall<T>(params);
+  return multicallWithRetry<T>(params);
 }
 
 export async function fetchV3PoolCoreSnapshots(

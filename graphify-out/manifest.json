@@ -140,8 +140,8 @@
     "hash": "26d9adc8fa790c5a73d41158e74573ea"
   },
   "/home/x/arb/t/src/state/state_multicall_hydrator.ts": {
-    "mtime": 1778567812.483295,
-    "hash": "7c364288fd2b2bf2388af488bbc76ea5"
+    "mtime": 1778693026.7385924,
+    "hash": "8b979c61ab14c20fa9538cd47f074cd4"
   },
   "/home/x/arb/t/src/state/index.ts": {
     "mtime": 1778551701.562017,
@@ -196,8 +196,8 @@
     "hash": "e85ecbeeed9299b0dd4f73afb329f5f7"
   },
   "/home/x/arb/t/src/state/normalizer.ts": {
-    "mtime": 1778664199.5315814,
-    "hash": "7f05f3fe9df8a79fd0baca54d8013262"
+    "mtime": 1778693026.7385924,
+    "hash": "cdabc328fe79281c4c5a0b773e60ab8c"
   },
   "/home/x/arb/t/src/state/uniswap_v3.ts": {
     "mtime": 1778655166.3410113,
@@ -296,8 +296,8 @@
     "hash": "c0cd0a4ab980c23453e970065dcb4627"
   },
   "/home/x/arb/t/src/state/enrichment/rpc.ts": {
-    "mtime": 1778662554.4949133,
-    "hash": "f4878748b8d75098e2069d6d1ef9e1b8"
+    "mtime": 1778693026.7385924,
+    "hash": "38e6974470a203d564081f6969fd8bca"
   },
   "/home/x/arb/t/src/math/curve.ts": {
     "mtime": 1778551701.566017,
@@ -412,8 +412,8 @@
     "hash": "ce8702c026f10b1ea4aee799f1da3353"
   },
   "/home/x/arb/t/src/utils/rpc_manager.ts": {
-    "mtime": 1778662674.2138853,
-    "hash": "30feaf3f9a2735992a68388848828645"
+    "mtime": 1778693039.5264015,
+    "hash": "ca48afe4d919a3bb6cc40b57290133a0"
   },
   "/home/x/arb/t/src/utils/bigint.ts": {
     "mtime": 1778556337.4681313,
@@ -460,8 +460,8 @@
     "hash": "f9167acbbb0b44b434a9147990446612"
   },
   "/home/x/arb/t/src/app/runner.ts": {
-    "mtime": 1778661312.0069396,
-    "hash": "b0e29d9539761b937af765ff15bb7fd9"
+    "mtime": 1778679022.280291,
+    "hash": "7eaf61e5994aec2ad2018e635d22c934"
   },
   "/home/x/arb/t/src/app/watcher_configurator.ts": {
     "mtime": 1778552708.1959558,
@@ -484,8 +484,8 @@
     "hash": "0eaf44c926fbc73b39034840575af0b1"
   },
   "/home/x/arb/t/src/app/runner_opportunity_engine.ts": {
-    "mtime": 1778628165.0143483,
-    "hash": "98f92714412d8ac7807ab55c8ad894e3"
+    "mtime": 1778679164.8510416,
+    "hash": "50c276a8defc0df2630f44b6c30b0924"
   },
   "/home/x/arb/t/src/app/operator_log.ts": {
     "mtime": 1778551701.5700169,
@@ -672,8 +672,8 @@
     "hash": "a5b4042063dff5bdc9e20688fb6b4d92"
   },
   "/home/x/arb/t/src/arb/execution_coordinator.ts": {
-    "mtime": 1778624203.8297746,
-    "hash": "8343a5f8590a3aaec872ecae0ebeceb4"
+    "mtime": 1778679347.5974393,
+    "hash": "bcd8b52558d864c654e8bab25897fb76"
   },
   "/home/x/arb/t/src/arb/assessment.ts": {
     "mtime": 1778658454.099775,
@@ -696,8 +696,8 @@
     "hash": "ca842790519923a94c6c3badabceba68"
   },
   "/home/x/arb/t/src/arb/profit_compute.ts": {
-    "mtime": 1778664456.2934291,
-    "hash": "1564fc183509460b564381b262883358"
+    "mtime": 1778679317.977699,
+    "hash": "a8a92a2fca1921b2b813da53543c1113"
   },
   "/home/x/arb/t/src/arb/price_oracle.ts": {
     "mtime": 1778661328.8747666,
@@ -712,8 +712,8 @@
     "hash": "406282631cac5d6e57741561e02c9829"
   },
   "/home/x/arb/t/src/config/index.ts": {
-    "mtime": 1778650592.1299112,
-    "hash": "9892172405ecea2002345858afb2dd00"
+    "mtime": 1778679210.6186404,
+    "hash": "91ca92a52e4f8cf7704be0b93e50f7f6"
   },
   "/home/x/arb/t/src/config/rpc_env.ts": {
     "mtime": 1778566764.9458654,
