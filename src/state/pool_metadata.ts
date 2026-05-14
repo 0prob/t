@@ -28,12 +28,15 @@ export function metadataWithTokenDecimals(
     orderedDecimals.push(decimals);
   }
 
-  if (orderedDecimals.length !== tokens.length) return metadata;
-  return {
-    ...metadata,
-    tokenDecimals: orderedDecimals,
-    tokenDecimalsByAddress,
-  };
+  if (Object.keys(tokenDecimalsByAddress).length === 0) return metadata;
+  if (orderedDecimals.length === tokens.length) {
+    return {
+      ...metadata,
+      tokenDecimals: orderedDecimals,
+      tokenDecimalsByAddress,
+    };
+  }
+  return { ...metadata, tokenDecimalsByAddress };
 }
 
 export function metadataWithRegistryTokenDecimals(

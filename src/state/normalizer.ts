@@ -354,8 +354,7 @@ export function normalizeCurveState(
   const tokenDecimals = normalizeTokenDecimalsList(normalizedTokens, meta);
   const resolvedDecimals = tokenDecimals.map((d, i) => {
     if (d != null) return d;
-    console.warn(`[normalizer] normalizeCurveState: unknown token decimals for token ${normalizedTokens[i]} in pool ${poolId}, assuming 18`);
-    return 18;
+    throw new Error(`normalizeCurveState: unknown token decimals for token ${normalizedTokens[i]} in pool ${poolId}`);
   }) as number[];
   const maxDecimals = Math.max(...resolvedDecimals, 18);
   const derivedRates: bigint[] | null = maxDecimals <= 59
