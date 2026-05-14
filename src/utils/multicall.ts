@@ -183,7 +183,7 @@ export async function fetchBalanceAndAllowance(
   // Fix #5: viem multicall with allowFailure:false returns raw values directly
   // as a readonly tuple — NOT {status, result} objects. Accessing .result on
   // them returns undefined. Destructure the values directly.
-  const [balance, allowance] = await client.multicall({
+  const results = await client.multicall({
     contracts: [
       {
         address: token,
@@ -202,8 +202,12 @@ export async function fetchBalanceAndAllowance(
     allowFailure: false, // hard-fail: if we can't read balances, abort execution
   });
 
+  // In viem v2, multicall with allowFailure: false returns an array of results directly.
+  // However, the type system might still treat it as a tuple of results.
+  const [balance, allowance] = results as [bigint, bigint];
+
   return {
-    balance: balance as bigint,
-    allowance: allowance as bigint,
+    balance,
+    allowance,
   };
 }

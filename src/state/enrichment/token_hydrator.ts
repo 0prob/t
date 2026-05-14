@@ -14,7 +14,7 @@
 import { chunk } from "../../utils/concurrency.ts";
 import { getAddress, createPublicClient, http } from "viem";
 import { polygon } from "viem/chains";
-import { ENRICH_CONCURRENCY } from "../../config/index.ts";
+import { ENRICH_CONCURRENCY, HYPERRPC_URL } from "../../config/index.ts";
 import { dynamicPublicClient, isEndpointCapabilityError } from "../../utils/rpc_manager.ts";
 import { logger } from "../../utils/logger.ts";
 import { getPoolTokens } from "../../utils/pool_record.ts";
@@ -32,10 +32,9 @@ let _hyperRpcClient: ReturnType<typeof createPublicClient> | null = null;
 
 function getHyperRpcClient() {
   if (!_hyperRpcClient) {
-    const url = process.env.HYPERRPC_URL || "";
     _hyperRpcClient = createPublicClient({
       chain: polygon,
-      transport: http(url, {
+      transport: http(HYPERRPC_URL, {
         timeout: 30_000,
         fetchOptions: { headers: { Connection: "keep-alive" } },
       }),
