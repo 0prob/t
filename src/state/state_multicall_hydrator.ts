@@ -188,8 +188,10 @@ export async function stateMulticallWithFallback<T = StateMulticallResult[]>(par
         const hyperRpcMulticallClient = requireStateMulticallClient(hyperRpcStateClient, "HyperRPC state");
         const results = await hyperRpcMulticallClient.multicall<T>(params);
         if (Array.isArray(results) && results.length > 0 && results.every((r) => r?.status !== "success")) {
+          hyperRpcMulticallDisabledAt = Date.now() + HYPERRPC_MULTICALL_RECOVERY_MS;
           stateHydratorLogger.warn(
-            "[state_multicall_hydrator] HyperRPC returned all failures — falling back to RPC manager for this request",
+            "[state_multicall_hydrator] HyperRPC returned all failures — cooling down for %dms",
+            HYPERRPC_MULTICALL_RECOVERY_MS,
           );
         } else {
           return results;
