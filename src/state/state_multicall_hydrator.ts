@@ -177,6 +177,12 @@ function successScalar(result: StateMulticallResult | null | undefined) {
   return result?.status === "success" ? result.result : undefined;
 }
 
+function isExecutionRevertError(error: unknown): boolean {
+  const msg = typeof error === "string" ? error : (error as Error)?.message || "";
+  const lowerMsg = msg.toLowerCase();
+  return lowerMsg.includes("execution reverted") || lowerMsg.includes("revert") || lowerMsg.includes("out of gas");
+}
+
 export async function stateMulticallWithFallback<T = StateMulticallResult[]>(params: StateMulticallParams): Promise<T> {
   if (hyperRpcMulticallAvailable) {
     if (hyperRpcMulticallDisabledAt > 0 && Date.now() >= hyperRpcMulticallDisabledAt) {
@@ -187,14 +193,22 @@ export async function stateMulticallWithFallback<T = StateMulticallResult[]>(par
       try {
         const hyperRpcMulticallClient = requireStateMulticallClient(hyperRpcStateClient, "HyperRPC state");
         const results = await hyperRpcMulticallClient.multicall<T>(params);
-        if (Array.isArray(results) && results.length > 0 && results.every((r) => r?.status !== "success")) {
-          const firstError = results[0]?.status === "failure" ? errorMessage(results[0].error) : "unknown";
-          hyperRpcMulticallDisabledAt = Date.now() + HYPERRPC_MULTICALL_RECOVERY_MS;
-          stateHydratorLogger.warn(
-            { firstError, count: results.length },
-            "[state_multicall_hydrator] HyperRPC returned all failures — cooling down for %dms",
-            HYPERRPC_MULTICALL_RECOVERY_MS,
-          );
+        if (Array.isArray(results) && results.length > 0 && results.every((r) => (r as any)?.status !== "success")) {
+          // Check if it's just all reverts
+          const allReverts = results.every((r) => isExecutionRevertError(errorMessage((r as any).error)));
+
+          if (!allReverts) {
+            const firstError = (results[0] as any)?.status === "failure" ? errorMessage((results[0] as any).error) : "unknown";
+            hyperRpcMulticallDisabledAt = Date.now() + HYPERRPC_MULTICALL_RECOVERY_MS;
+            stateHydratorLogger.warn(
+              { firstError, count: results.length },
+              "[state_multicall_hydrator] HyperRPC returned all failures (not execution reverts) — cooling down for %dms",
+              HYPERRPC_MULTICALL_RECOVERY_MS,
+            );
+          } else {
+            stateHydratorLogger.debug("[state_multicall_hydrator] HyperRPC returned all reverts, skipping cooldown");
+            return results;
+          }
         } else {
           return results;
         }
@@ -205,6 +219,10 @@ export async function stateMulticallWithFallback<T = StateMulticallResult[]>(par
             "[state_multicall_hydrator] HyperRPC does not support multicall — cooling down for %dms",
             HYPERRPC_MULTICALL_RECOVERY_MS,
           );
+        } else if (isExecutionRevertError(err)) {
+          // It threw a revert error directly instead of returning it in the array
+          stateHydratorLogger.debug("[state_multicall_hydrator] HyperRPC multicall threw revert, skipping cooldown");
+          throw err;
         } else {
           hyperRpcMulticallDisabledAt = Date.now() + HYPERRPC_MULTICALL_RECOVERY_MS;
           stateHydratorLogger.debug(
