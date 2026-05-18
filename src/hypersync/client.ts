@@ -31,6 +31,7 @@ type HypersyncClientConfig = {
   retryBackoffMs?: number;
   retryBaseMs?: number;
   retryCeilingMs?: number;
+  proactiveRateLimitSleep?: boolean;
 };
 
 type HypersyncError = Error & {
@@ -139,6 +140,11 @@ export function normalizeHypersyncClientConfig(rawConfig: HypersyncClientConfig)
   const retryBaseMs = normalizeOptionalClientInteger("retryBaseMs", rawConfig?.retryBaseMs);
   const retryCeilingMs = normalizeOptionalClientInteger("retryCeilingMs", rawConfig?.retryCeilingMs);
 
+  let proactiveRateLimitSleep = rawConfig?.proactiveRateLimitSleep;
+  if (proactiveRateLimitSleep !== undefined && typeof proactiveRateLimitSleep !== "boolean") {
+     throw createHypersyncConfigError("proactiveRateLimitSleep must be a boolean.");
+  }
+
   if (retryBaseMs != null && retryCeilingMs != null && retryCeilingMs < retryBaseMs) {
     throw createHypersyncConfigError("retryCeilingMs must be >= retryBaseMs.");
   }
@@ -151,6 +157,7 @@ export function normalizeHypersyncClientConfig(rawConfig: HypersyncClientConfig)
     ...(retryBackoffMs != null ? { retryBackoffMs } : {}),
     ...(retryBaseMs != null ? { retryBaseMs } : {}),
     ...(retryCeilingMs != null ? { retryCeilingMs } : {}),
+    ...(proactiveRateLimitSleep !== undefined ? { proactiveRateLimitSleep } : {}),
   };
 }
 
@@ -248,6 +255,7 @@ function _initClient() {
       retryBackoffMs: HYPERSYNC_RETRY_BACKOFF_MS,
       retryBaseMs: HYPERSYNC_RETRY_BASE_MS,
       retryCeilingMs: HYPERSYNC_RETRY_CEILING_MS,
+      proactiveRateLimitSleep: true,
     },
     hypersyncImportError,
   );
