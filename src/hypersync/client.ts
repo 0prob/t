@@ -153,7 +153,7 @@ export function normalizeHypersyncClientConfig(rawConfig: HypersyncClientConfig)
   const retryBaseMs = normalizeOptionalClientInteger("retryBaseMs", rawConfig?.retryBaseMs);
   const retryCeilingMs = normalizeOptionalClientInteger("retryCeilingMs", rawConfig?.retryCeilingMs);
 
-  let proactiveRateLimitSleep = rawConfig?.proactiveRateLimitSleep;
+  const proactiveRateLimitSleep = rawConfig?.proactiveRateLimitSleep;
   if (proactiveRateLimitSleep !== undefined && typeof proactiveRateLimitSleep !== "boolean") {
      throw createHypersyncConfigError("proactiveRateLimitSleep must be a boolean.");
   }
