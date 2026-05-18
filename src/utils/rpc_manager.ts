@@ -156,10 +156,13 @@ class RpcEndpoint {
     this.client = createPublicClient({
       chain: polygon,
       transport: http(this.url, {
+        batch: true, // ENABLED
         timeout: 20_000,
         fetchOptions: { headers: { Connection: "keep-alive" } },
       }),
-      batch: { multicall: true },
+      batch: {
+        multicall: { wait: 16 }, // TUNED
+      },
     });
   }
 
