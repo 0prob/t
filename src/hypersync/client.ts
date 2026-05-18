@@ -38,6 +38,19 @@ type HypersyncError = Error & {
   cause?: unknown;
 };
 
+export type HyperSyncGetResponse<TLog = unknown> = {
+  archiveHeight?: number | string | null;
+  rollbackGuard?: Record<string, unknown> | null;
+  nextBlock: number | string;
+  data?: {
+    logs?: TLog[];
+  };
+};
+
+export type HypersyncStream<T> = {
+  recv: () => Promise<HyperSyncGetResponse<T> | null>;
+};
+
 export type HypersyncClientRuntime = {
   getHeight: () => Promise<number>;
   getChainId: () => Promise<number>;
@@ -48,7 +61,7 @@ export type HypersyncClientRuntime = {
   collectEvents: <T = unknown>(query: unknown, config: unknown) => Promise<T>;
   collectParquet: (path: string, query: unknown, config: unknown) => Promise<void>;
   streamHeight: <T = unknown>() => Promise<T>;
-  stream: <T = unknown>(query: unknown, config: unknown) => Promise<T>;
+  stream: <T = unknown>(query: unknown, config: unknown) => Promise<HypersyncStream<T>>;
   streamEvents: <T = unknown>(query: unknown, config: unknown) => Promise<T>;
   rateLimitInfo: () => unknown;
   waitForRateLimit: () => Promise<void>;

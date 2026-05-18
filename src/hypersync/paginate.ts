@@ -37,6 +37,11 @@ type HyperSyncPaginationOptions = {
   onProgress?: (progress: HyperSyncPaginationProgress) => void;
 };
 
+type HyperSyncStreamConfig = {
+  concurrency?: number;
+  batchSize?: number;
+};
+
 function resolvePaginationTarget(query: HyperSyncLogQuery, nextBlock: number, archiveHeight: number | null) {
   const toBlock = query.toBlock != null ? Number(query.toBlock) : null;
   if (toBlock != null) return toBlock;
@@ -95,7 +100,13 @@ function pageLogsFromResponse<TLog>(res: HyperSyncGetResponse<TLog>): TLog[] {
 }
 
 export async function fetchAllLogsWithClient<TLog>(
-  hypersyncClient: { get: (query: HyperSyncLogQuery) => Promise<HyperSyncGetResponse<TLog>> },
+  hypersyncClient: {
+    get: (query: HyperSyncLogQuery) => Promise<HyperSyncGetResponse<TLog>>;
+    stream?: (
+      query: HyperSyncLogQuery,
+      config: HyperSyncStreamConfig,
+    ) => Promise<{ recv: () => Promise<HyperSyncGetResponse<TLog> | null> }>;
+  },
   query: HyperSyncLogQuery,
   options: HyperSyncPaginationOptions = {},
 ): Promise<HyperSyncPageResult<TLog>> {
@@ -116,8 +127,6 @@ export async function fetchAllLogsWithClient<TLog>(
     };
   }
 
-  // Pre-allocate log array with estimated capacity to reduce reallocations.
-  // HyperSync typically returns ~500-2000 logs per page for DEX events.
   const MAX_ACCUMULATED_LOGS = 5_000_000;
   const allLogs: TLog[] = [];
   let currentQuery = applyHistoricalHyperSyncQueryPolicy(query);
@@ -125,93 +134,139 @@ export async function fetchAllLogsWithClient<TLog>(
   let rollbackGuard: Record<string, unknown> | null = null;
   let lastNextBlock: number | null = null;
   let pages = 0;
-  // Track consecutive empty pages to detect completion without archive height.
-  let consecutiveEmptyPages = 0;
-  const MAX_CONSECUTIVE_EMPTY = 3;
 
-  const PAGE_TIMEOUT_MS = 120_000;
+  if (hypersyncClient.stream) {
+    // USE STREAMING
+    const stream = await hypersyncClient.stream(currentQuery, {
+      concurrency: 10,
+      batchSize: 1000,
+    });
 
-  while (true) {
-    const pageFromBlock = parseBlockInteger("page fromBlock", currentQuery.fromBlock);
-    if (pages >= maxPages) {
-      throw new Error(`HyperSync pagination exceeded maxPages ${maxPages} before reaching a terminal cursor.`);
+    while (true) {
+      if (pages >= maxPages) {
+        throw new Error(`HyperSync pagination exceeded maxPages ${maxPages} before reaching a terminal cursor.`);
+      }
+
+      const res = await stream.recv();
+      if (res === null) {
+        // Stream ended
+        break;
+      }
+      pages++;
+
+      if (res.archiveHeight != null) {
+        archiveHeight = parseBlockInteger("response archiveHeight", res.archiveHeight);
+      }
+      if (res.rollbackGuard) {
+        rollbackGuard = res.rollbackGuard;
+      }
+
+      const pageLogs = pageLogsFromResponse(res);
+      if (pageLogs.length > 0) {
+        if (allLogs.length + pageLogs.length > MAX_ACCUMULATED_LOGS) {
+          throw new Error(
+            `HyperSync pagination exceeded memory limit of ${MAX_ACCUMULATED_LOGS} logs (${allLogs.length} + ${pageLogs.length} from page ${pages}).`,
+          );
+        }
+        allLogs.push(...pageLogs);
+      }
+
+      const responseNextBlock = parseBlockInteger("response nextBlock cursor", res.nextBlock);
+      lastNextBlock = clampNextBlockToExclusiveTarget(currentQuery, responseNextBlock);
+
+      options.onProgress?.({
+        pages,
+        logs: allLogs.length,
+        fromBlock: responseNextBlock, // approx
+        nextBlock: lastNextBlock,
+        archiveHeight,
+      });
     }
-    const res = await Promise.race([
-      hypersyncClient.get(currentQuery),
-      new Promise<never>((_, reject) =>
-        setTimeout(
-          () => reject(new Error(`HyperSync page ${pages} timed out after ${PAGE_TIMEOUT_MS}ms at block ${pageFromBlock}`)),
-          PAGE_TIMEOUT_MS,
+  } else {
+    // FALLBACK TO ORIGINAL GET LOOP
+    let consecutiveEmptyPages = 0;
+    const MAX_CONSECUTIVE_EMPTY = 3;
+    const PAGE_TIMEOUT_MS = 120_000;
+
+    while (true) {
+      const pageFromBlock = parseBlockInteger("page fromBlock", currentQuery.fromBlock);
+      if (pages >= maxPages) {
+        throw new Error(`HyperSync pagination exceeded maxPages ${maxPages} before reaching a terminal cursor.`);
+      }
+      const res = await Promise.race([
+        hypersyncClient.get(currentQuery),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`HyperSync page ${pages} timed out after ${PAGE_TIMEOUT_MS}ms at block ${pageFromBlock}`)),
+            PAGE_TIMEOUT_MS,
+          ),
         ),
-      ),
-    ]);
-    pages++;
+      ]);
+      pages++;
 
-    if (res.archiveHeight != null) {
-      archiveHeight = parseBlockInteger("response archiveHeight", res.archiveHeight);
-    }
-    if (res.rollbackGuard) {
-      rollbackGuard = res.rollbackGuard;
-    }
+      if (res.archiveHeight != null) {
+        archiveHeight = parseBlockInteger("response archiveHeight", res.archiveHeight);
+      }
+      if (res.rollbackGuard) {
+        rollbackGuard = res.rollbackGuard;
+      }
 
-    const pageLogs = pageLogsFromResponse(res);
-    if (pageLogs.length > 0) {
-      if (allLogs.length + pageLogs.length > MAX_ACCUMULATED_LOGS) {
+      const pageLogs = pageLogsFromResponse(res);
+      if (pageLogs.length > 0) {
+        if (allLogs.length + pageLogs.length > MAX_ACCUMULATED_LOGS) {
+          throw new Error(
+            `HyperSync pagination exceeded memory limit of ${MAX_ACCUMULATED_LOGS} logs (${allLogs.length} + ${pageLogs.length} from page ${pages}). Consider reducing batch size, narrowing block range, or increasing filter specificity.`,
+          );
+        }
+        allLogs.push(...pageLogs);
+        consecutiveEmptyPages = 0;
+      } else {
+        consecutiveEmptyPages++;
+      }
+
+      const responseNextBlock = parseBlockInteger("response nextBlock cursor", res.nextBlock);
+      const nextBlock = clampNextBlockToExclusiveTarget(currentQuery, responseNextBlock);
+      options.onProgress?.({
+        pages,
+        logs: allLogs.length,
+        fromBlock: pageFromBlock,
+        nextBlock,
+        archiveHeight,
+      });
+      if (isTerminalBoundedCursor(currentQuery, pageFromBlock, responseNextBlock, pageLogs.length)) {
+        lastNextBlock = Number(currentQuery.toBlock);
+        break;
+      }
+      if (archiveHeight == null && currentQuery.toBlock == null && nextBlock === pageFromBlock) {
         throw new Error(
-          `HyperSync pagination exceeded memory limit of ${MAX_ACCUMULATED_LOGS} logs (${allLogs.length} + ${pageLogs.length} from page ${pages}). Consider reducing batch size, narrowing block range, or increasing filter specificity.`,
+          `HyperSync nextBlock cursor stalled at ${nextBlock} without archive height; cannot determine whether pagination is complete.`,
         );
       }
-      allLogs.push(...pageLogs);
-      consecutiveEmptyPages = 0;
-    } else {
-      consecutiveEmptyPages++;
-    }
+      const targetEnd = resolvePaginationTarget(currentQuery, nextBlock, archiveHeight);
+      if (responseNextBlock < pageFromBlock) {
+        throw new Error(`HyperSync nextBlock cursor regressed from ${pageFromBlock} to ${responseNextBlock}; refusing to paginate.`);
+      }
+      if (nextBlock === pageFromBlock) {
+        if (targetEnd <= pageFromBlock) {
+          lastNextBlock = nextBlock;
+          break;
+        }
+        throw new Error(`HyperSync nextBlock cursor stalled at ${nextBlock}; refusing to loop forever.`);
+      }
 
-    const responseNextBlock = parseBlockInteger("response nextBlock cursor", res.nextBlock);
-    const nextBlock = clampNextBlockToExclusiveTarget(currentQuery, responseNextBlock);
-    options.onProgress?.({
-      pages,
-      logs: allLogs.length,
-      fromBlock: pageFromBlock,
-      nextBlock,
-      archiveHeight,
-    });
-    if (isTerminalBoundedCursor(currentQuery, pageFromBlock, responseNextBlock, pageLogs.length)) {
-      lastNextBlock = Number(currentQuery.toBlock);
-      break;
-    }
-    if (archiveHeight == null && currentQuery.toBlock == null && nextBlock === pageFromBlock) {
-      throw new Error(
-        `HyperSync nextBlock cursor stalled at ${nextBlock} without archive height; cannot determine whether pagination is complete.`,
-      );
-    }
-    const targetEnd = resolvePaginationTarget(currentQuery, nextBlock, archiveHeight);
-    if (responseNextBlock < pageFromBlock) {
-      throw new Error(`HyperSync nextBlock cursor regressed from ${pageFromBlock} to ${responseNextBlock}; refusing to paginate.`);
-    }
-    if (nextBlock === pageFromBlock) {
-      if (targetEnd <= pageFromBlock) {
+      lastNextBlock = nextBlock;
+
+      if (nextBlock >= targetEnd) {
+        break;
+      }
+
+      if (consecutiveEmptyPages >= MAX_CONSECUTIVE_EMPTY && currentQuery.toBlock == null) {
         lastNextBlock = nextBlock;
         break;
       }
-      throw new Error(`HyperSync nextBlock cursor stalled at ${nextBlock}; refusing to loop forever.`);
+
+      currentQuery = { ...currentQuery, fromBlock: nextBlock };
     }
-
-    lastNextBlock = nextBlock;
-
-    if (nextBlock >= targetEnd) {
-      break;
-    }
-
-    // Early termination: if we've seen multiple consecutive empty pages and
-    // the cursor is advancing, we've likely caught up to the chain tip.
-    // This avoids unnecessary RPC calls when the watcher is near real-time.
-    if (consecutiveEmptyPages >= MAX_CONSECUTIVE_EMPTY && currentQuery.toBlock == null) {
-      lastNextBlock = nextBlock;
-      break;
-    }
-
-    currentQuery = { ...currentQuery, fromBlock: nextBlock };
   }
 
   return {

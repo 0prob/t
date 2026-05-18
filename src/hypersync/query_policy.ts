@@ -1,3 +1,4 @@
+export type { HyperSyncGetResponse } from "./client.ts";
 import { BlockField, JoinMode, LogField } from "./client.ts";
 import { HYPERSYNC_BATCH_SIZE, HYPERSYNC_MAX_BLOCKS_PER_REQUEST } from "../config/index.ts";
 import { normalizeTopic } from "./topics.ts";
@@ -32,15 +33,6 @@ export type HyperSyncHistoricalQueryPolicyInput = {
   joinMode?: unknown;
   maxNumLogs?: number;
   maxNumBlocks?: number;
-};
-
-export type HyperSyncGetResponse<TLog = unknown> = {
-  archiveHeight?: number | string | null;
-  rollbackGuard?: Record<string, unknown> | null;
-  nextBlock: number | string;
-  data?: {
-    logs?: TLog[];
-  };
 };
 
 export const DEFAULT_HYPERSYNC_BLOCK_FIELDS = [BlockField.Number, BlockField.Timestamp];
