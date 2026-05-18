@@ -507,6 +507,7 @@ export function resolveRunnerOptions(args: string[], env: RunnerEnv, defaultPoll
     liveMode: parsedArgs.liveMode,
     discoveryOnly: parsedArgs.discoveryOnly,
     tuiMode: parsedArgs.tuiMode,
+    maxPasses: parsedArgs.maxPasses,
     pollIntervalSec,
     privateKey: env.PRIVATE_KEY || null,
     executorAddress: env.EXECUTOR_ADDRESS || null,

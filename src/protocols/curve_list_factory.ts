@@ -241,7 +241,7 @@ export async function discoverCurveListedFactory({
     args: [BigInt(index)],
   }));
 
-  let poolListResults: { status: string; result?: unknown; error?: unknown }[] = [];
+  const poolListResults: { status: string; result?: unknown; error?: unknown }[] = [];
   try {
     const chunks = [];
     for (let i = 0; i < poolListContracts.length; i += 100) {
@@ -312,7 +312,7 @@ export async function discoverCurveListedFactory({
     args: [poolAddress],
   }));
 
-  let getCoinsResults: { status: string; result?: unknown; error?: unknown }[] = [];
+  const getCoinsResults: { status: string; result?: unknown; error?: unknown }[] = [];
   if (getCoinsContracts.length > 0) {
     try {
       // get_coins can be very slow on Curve factories; use small chunks to avoid RPC timeouts

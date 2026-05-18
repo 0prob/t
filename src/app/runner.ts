@@ -416,6 +416,7 @@ type PassRunnerDeps = {
   getConsecutiveErrors: () => number;
   incrementConsecutiveErrors: () => number;
   resetConsecutiveErrors: () => void;
+  onPassComplete?: (passCount: number) => void;
   setBotState: (update: {
     passCount: number;
     consecutiveErrors: number;
@@ -572,6 +573,7 @@ export function createPassRunner(deps: PassRunnerDeps) {
         opportunities: opportunities.length,
       });
       deps.resetConsecutiveErrors();
+      deps.onPassComplete?.(passCount);
     } catch (err: unknown) {
       deps.log(`Pass #${passCount} failed: ${errorMessage(err)}`, "error", {
         event: "pass_failed",
@@ -588,6 +590,7 @@ export function createPassRunner(deps: PassRunnerDeps) {
         lastPassDurationMs: Date.now() - startedAt,
         lastUpdateMs: Date.now(),
       });
+      deps.onPassComplete?.(passCount);
       if (consecutiveErrors >= deps.maxConsecutiveErrors) {
         deps.log(`${deps.maxConsecutiveErrors} consecutive errors — backing off 30s`, "warn");
         await deps.sleep(30_000);
@@ -2408,6 +2411,7 @@ type RunnerPassCoordinatorDeps = {
   incrementConsecutiveErrors: () => number;
   resetConsecutiveErrors: () => void;
   botTelemetry: BotTelemetryLike;
+  onPassComplete?: (passCount: number) => void;
   log: LoggerFn;
   trackBackgroundTask: (task: Promise<unknown>) => void;
   maybeRunDiscovery: () => Promise<unknown>;
@@ -2434,6 +2438,7 @@ export function createRunnerPassCoordinator(deps: RunnerPassCoordinatorDeps) {
     getConsecutiveErrors: deps.getConsecutiveErrors,
     incrementConsecutiveErrors: deps.incrementConsecutiveErrors,
     resetConsecutiveErrors: deps.resetConsecutiveErrors,
+    onPassComplete: deps.onPassComplete,
     setBotState: deps.botTelemetry.setPassState,
     setBotErrorState: deps.botTelemetry.setPassErrorState,
     log: deps.log,

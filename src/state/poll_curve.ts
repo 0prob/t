@@ -203,7 +203,7 @@ export async function fetchCurvePoolState(poolAddress: string, nCoins: number) {
       if (allOk && candidate.length === nCoins) balances = candidate;
     }
     if (balances.length === 0) {
-      balances = Array(nCoins).fill(0n);
+      throw new Error(`Failed to fetch balances for Curve pool ${poolAddress} via all supported methods`);
     }
   }
 

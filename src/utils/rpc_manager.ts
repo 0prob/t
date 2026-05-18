@@ -37,10 +37,12 @@ export const dynamicPublicClient = new Proxy(
           manager.markSuccess(endpoint.url, method);
           return result;
         } catch (err: unknown) {
-          if (isEndpointCapabilityError(err)) {
+          if (isEndpointCapabilityError(err, method)) {
             manager.markMethodUnavailable(endpoint.url, method);
           } else if (isRateLimitError(err)) {
             manager.markRateLimited(endpoint.url, err, method);
+          } else if (isAuthError(err)) {
+            manager.markAuthFailed(endpoint.url);
           } else {
             manager.markError(endpoint.url, method);
           }
@@ -300,9 +302,19 @@ export class RpcManager {
     if (ep) ep.markRateLimited(error, method);
   }
 
+  markAuthFailed(url: string) {
+    const ep = this.endpoints.find((e) => e.url === url);
+    if (ep) ep.errorCooldownUntil = Date.now() + 3_600_000;
+  }
+
   markMethodUnavailable(url: string, method: string) {
     const ep = this.endpoints.find((e) => e.url === url);
-    if (ep) ep.methodUnavailableUntil.set(method, Date.now() + 60_000);
+    if (!ep) return;
+    if (method === "eth_call" || method === "eth_blockNumber" || method === "getBlockNumber") {
+      ep.markError(method);
+      return;
+    }
+    ep.methodUnavailableUntil.set(method, Date.now() + 60_000);
   }
 
   markError(url: string, method = DEFAULT_RPC_METHOD) {
@@ -474,8 +486,17 @@ export function isRateLimitError(err: unknown): boolean {
   return msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("429");
 }
 
-export function isEndpointCapabilityError(err: unknown): boolean {
+export function isEndpointCapabilityError(err: unknown, method?: string): boolean {
   const msg = errorMessage(err).toLowerCase();
+
+  // eth_call and getBlockNumber are so fundamental that they should almost
+  // never be considered unsupported by a JSON-RPC endpoint. Misclassification
+  // often happens when transient errors (like "Feature not supported for your plan")
+  // are returned for specific calls.
+  if (method === "eth_call" || method === "eth_blockNumber" || method === "getBlockNumber") {
+    return msg.includes("method not found") || msg.includes("-32601");
+  }
+
   return (
     msg.includes("unsupported") ||
     msg.includes("not supported") ||
@@ -487,14 +508,25 @@ export function isEndpointCapabilityError(err: unknown): boolean {
 export function isAuthError(err: unknown): boolean {
   const { status, statusCode } = (err as Record<string, unknown>) || {};
   const httpStatus = Number(status ?? statusCode);
-  if (httpStatus === 401 || httpStatus === 403) return true;
+
+  // 401 Unauthorized is almost always a permanent credential issue.
+  if (httpStatus === 401) return true;
+
   const msg = errorMessage(err).toLowerCase();
-  return msg.includes("unauthorized") || msg.includes("forbidden") || msg.includes("401") || msg.includes("403");
+
+  // 403 Forbidden can be permanent (e.g. IP block) or plan-related (e.g. throughput).
+  // Alchemy often uses 403 for "Capacity reached".
+  // We only treat it as a permanent auth error if the message looks like a credential/access issue.
+  if (httpStatus === 403) {
+    return msg.includes("unauthorized") || msg.includes("forbidden") || msg.includes("invalid api key");
+  }
+
+  return msg.includes("unauthorized") || msg.includes("forbidden") || msg.includes("401");
 }
 
-export function isRetryableError(err: unknown): boolean {
+export function isRetryableError(err: unknown, method?: string): boolean {
   if (isRateLimitError(err)) return true;
-  if (isEndpointCapabilityError(err)) return false;
+  if (isEndpointCapabilityError(err, method)) return false;
   if (isAuthError(err)) return false;
   const msg = errorMessage(err).toLowerCase();
   // Check numeric HTTP status first (viem HttpRequestError.status, fetch Response.status)
@@ -509,6 +541,7 @@ export function isRetryableError(err: unknown): boolean {
     msg.includes("econnreset") ||
     msg.includes("socket hang up") ||
     msg.includes("network") ||
+    msg.includes("data size of 1 bytes is too small") ||
     // HTTP 5xx status descriptions: only match multi-digit 50x patterns, not bare "5"
     /\b50[0-9]\b|\b5[0-9]{2}\b/.test(msg) ||
     msg.includes("-32000") ||

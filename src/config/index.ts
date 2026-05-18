@@ -62,12 +62,6 @@ const _perf = _loadPerfJson();
  * @param {string} perfKey  Key inside perf.json params object
  * @param {number} def      Built-in default
  */
-function _parseSafeNonNegativeConfigNumber(raw: unknown) {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0) return null;
-  return n;
-}
-
 function _numFloat(envKey: string, perfKey: string, def: number): number {
   const raw = process.env[envKey];
   if (raw != null && raw !== "") {
@@ -103,14 +97,15 @@ function _bigint(envKey: string, perfKey: string, def: bigint): bigint {
 }
 
 function _num(envKey: string, perfKey: string, def: number): number {
-  if (process.env[envKey] != null && process.env[envKey] !== "") {
-    const n = _parseSafeNonNegativeConfigNumber(process.env[envKey]);
-    if (n != null) return n;
-    console.warn(`[config] Invalid numeric env ${envKey}=${process.env[envKey]} — using fallback`);
+  const raw = process.env[envKey];
+  if (raw != null && raw !== "") {
+    const n = Number(raw);
+    if (Number.isFinite(n) && n >= 0) return n;
+    console.warn(`[config] Invalid numeric env ${envKey}=${raw} — using fallback`);
   }
   if (_perf[perfKey] != null) {
-    const n = _parseSafeNonNegativeConfigNumber(_perf[perfKey]);
-    if (n != null) return n;
+    const n = Number(_perf[perfKey]);
+    if (Number.isFinite(n) && n >= 0) return n;
     console.warn(`[config] Invalid numeric perf.json value for ${perfKey}=${_perf[perfKey]} — using fallback`);
   }
   return def;
@@ -293,13 +288,57 @@ const _envRpcUrls = _dedupeRpcUrls(
 );
 
 /**
+ * Free public Polygon mainnet RPC endpoints (fallback only — used when no
+ * POLYGON_RPC or POLYGON_RPC_URLS env vars are set).
+ *
+ * Policy: free tier, no API key, Polygon mainnet (chainId 0x89), NO simulation
+ * nodes (Tenderly belongs in GAS_ESTIMATION_RPC, see rpc_env.ts).
+ *
+ * Health-probed 2026-05-17 with `eth_chainId`. Re-validate when editing.
+ *
+ * The RpcManager probes every 15 s and routes to the healthiest endpoint, so
+ * a regressed entry degrades gracefully rather than breaking traffic.
+ *
+ * Rejected (do not re-add without re-checking):
+ *   polygon-rpc.com               — now keyed (401 "tenant disabled")
+ *   rpc.ankr.com/polygon          — requires API key
+ *   polygon.blockpi.network/...   — public tier unstable (521s)
+ *   polygon.llarpc.com            — DNS-dead typo of llamarpc.com (also flaky)
+ *   tenderly.rpc.polygon.community — simulation node; forbidden by rpc_env.ts
+ */
+const _defaultFreeRpcs = [
+  "https://polygon-bor-rpc.publicnode.com", // PublicNode (Allnodes)
+  "https://polygon.drpc.org", // dRPC public tier
+  "https://polygon.api.onfinality.io/public", // OnFinality public
+  "https://polygon-public.nodies.app", // Nodies
+  "https://poly.api.pocket.network", // POKT public gateway
+  "https://1rpc.io/matic", // 1RPC (privacy-focused)
+];
+
+/**
  * Primary RPC used for execution (sendTx, nonce, gas estimates) and any call
  * that needs a single authoritative endpoint.
  *
- * Priority: POLYGON_RPC env → first POLYGON_RPC_URLS entry → Alchemy demo
- *           (rate-limited, for dev only).
+ * Priority: POLYGON_RPC env → first POLYGON_RPC_URLS entry → first free fallback.
+ *
+ * The previous Alchemy `/v2/demo` fallback was removed: it is severely
+ * rate-limited and makes broken setups look "working" until they suddenly 429.
+ * Falling back to a healthy public node is strictly better for unconfigured
+ * environments. Operators are expected to set POLYGON_RPC in production.
  */
-export const POLYGON_RPC = _ensureHttps(process.env.POLYGON_RPC || _envRpcUrls[0] || "https://polygon-mainnet.g.alchemy.com/v2/demo");
+const _rawPolygonRpc = process.env.POLYGON_RPC || "";
+export const POLYGON_RPC = _ensureHttps(_rawPolygonRpc || _envRpcUrls[0] || _defaultFreeRpcs[0]);
+
+if (!_rawPolygonRpc && !_envRpcUrls.length) {
+  console.warn(`[config] POLYGON_RPC unset — using free public fallback ${POLYGON_RPC}. Set POLYGON_RPC for production.`);
+}
+
+const _paidRpc = _rawPolygonRpc && !_rawPolygonRpc.includes("/v2/demo") ? [_ensureHttps(_rawPolygonRpc)] : [];
+
+// Always include default free RPCs as fallbacks to ensure the bot can continue
+// operating if user-configured endpoints fail or are rate-limited.
+// The RpcManager will naturally prioritize the healthiest (usually paid) endpoints.
+export const FREE_RPC_URLS = _dedupeRpcUrls([..._paidRpc, ..._envRpcUrls, ..._defaultFreeRpcs]);
 
 // ─── Gas Price Defaults ─────────────────────────────────────────
 
@@ -311,34 +350,6 @@ export const DEFAULT_GAS_PRICE_GWEI = 30;
 
 /** Gwei to wei multiplier */
 export const GWEI = 10n ** 9n;
-
-/**
- * Free public Polygon RPC endpoints (fallback only — used when no
- * POLYGON_RPC or POLYGON_RPC_URLS env vars are set).
- *
- * When any user endpoint is configured, these hardcoded entries
- * are excluded to avoid polluting the pool with slow / rate-limited
- * public nodes.
- *
- * The manager probes all endpoints every 15 s and routes to the healthiest one.
- */
-const _defaultFreeRpcs = [
-  "https://poly.api.pocket.network", // Pocket Network
-  "https://polygon-bor-rpc.publicnode.com", // PublicNode
-  "https://polygon-rpc.com", // Official Polygon public RPC
-  "https://polygon.llarpc.com", // LlamaNodes public
-  "https://polygon-public.nodies.app", // Nodies
-  "https://polygon.api.onfinality.io/public", // OnFinality
-  "https://tenderly.rpc.polygon.community", // Tenderly community RPC
-];
-
-const _rawRpc = process.env.POLYGON_RPC || "";
-const _paidRpc = _rawRpc && !_rawRpc.includes("/v2/demo") ? [_ensureHttps(_rawRpc)] : [];
-
-const _hasUserEndpoints = _paidRpc.length > 0 || _envRpcUrls.length > 0;
-const _allUrls = _hasUserEndpoints ? [..._paidRpc, ..._envRpcUrls] : _defaultFreeRpcs;
-
-export const FREE_RPC_URLS = [...new Set(_allUrls)];
 
 // ─── Private Mempool ───────────────────────────────────────────
 

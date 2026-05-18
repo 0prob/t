@@ -4,6 +4,7 @@ type ParsedRunnerArgs = {
   discoveryOnly: boolean;
   tuiMode: boolean;
   pollIntervalSec: number;
+  maxPasses: number | null;
 };
 
 function parsePositiveInteger(value: string, flagName: string) {
@@ -31,11 +32,22 @@ export function parseRunnerArgs(args: string[], defaultPollIntervalSec: number):
     pollIntervalSec = parsePositiveInteger(rawValue, "--interval");
   }
 
+  const maxPassesIdx = args.indexOf("--max-passes");
+  let maxPasses: number | null = null;
+  if (maxPassesIdx !== -1) {
+    const rawValue = args[maxPassesIdx + 1];
+    if (rawValue == null || rawValue.startsWith("--")) {
+      throw new Error("--max-passes requires a positive integer value");
+    }
+    maxPasses = parsePositiveInteger(rawValue, "--max-passes");
+  }
+
   return {
     loopMode: args.includes("--loop"),
     liveMode: args.includes("--live"),
     discoveryOnly: args.includes("--discovery-only"),
     tuiMode: args.includes("--tui"),
     pollIntervalSec,
+    maxPasses,
   };
 }

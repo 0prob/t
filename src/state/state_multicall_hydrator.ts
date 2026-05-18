@@ -10,7 +10,7 @@
 import { createPublicClient, http, getAddress } from "viem";
 import { polygon } from "viem/chains";
 import { HYPERRPC_URL } from "../config/index.ts";
-import { isEndpointCapabilityError, isRateLimitError, isRetryableError } from "../utils/rpc_manager.ts";
+import { isEndpointCapabilityError } from "../utils/rpc_manager.ts";
 import { errorMessage } from "../utils/errors.ts";
 import { logger } from "../utils/logger.ts";
 import { multicallWithRetry } from "./enrichment/rpc.ts";
@@ -149,7 +149,7 @@ const hyperRpcStateClient = createPublicClient({
   batch: { multicall: true },
 });
 
-let hyperRpcMulticallAvailable = true;
+const hyperRpcMulticallAvailable = true;
 let hyperRpcMulticallDisabledAt = 0;
 const HYPERRPC_MULTICALL_RECOVERY_MS = 60_000;
 
@@ -188,8 +188,10 @@ export async function stateMulticallWithFallback<T = StateMulticallResult[]>(par
         const hyperRpcMulticallClient = requireStateMulticallClient(hyperRpcStateClient, "HyperRPC state");
         const results = await hyperRpcMulticallClient.multicall<T>(params);
         if (Array.isArray(results) && results.length > 0 && results.every((r) => r?.status !== "success")) {
+          const firstError = results[0]?.status === "failure" ? errorMessage(results[0].error) : "unknown";
           hyperRpcMulticallDisabledAt = Date.now() + HYPERRPC_MULTICALL_RECOVERY_MS;
           stateHydratorLogger.warn(
+            { firstError, count: results.length },
             "[state_multicall_hydrator] HyperRPC returned all failures — cooling down for %dms",
             HYPERRPC_MULTICALL_RECOVERY_MS,
           );
@@ -197,7 +199,7 @@ export async function stateMulticallWithFallback<T = StateMulticallResult[]>(par
           return results;
         }
       } catch (err) {
-        if (isEndpointCapabilityError(err)) {
+        if (isEndpointCapabilityError(err, "eth_call")) {
           hyperRpcMulticallDisabledAt = Date.now() + HYPERRPC_MULTICALL_RECOVERY_MS;
           stateHydratorLogger.warn(
             "[state_multicall_hydrator] HyperRPC does not support multicall — cooling down for %dms",

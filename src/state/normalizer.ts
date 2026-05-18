@@ -691,7 +691,8 @@ export function validatePoolState(input: unknown): ValidationVerdict {
     tokens.push(normalizedToken);
   }
 
-  if (!Number.isFinite(Number(state.timestamp)) || Number(state.timestamp) <= 0) return { valid: false, reason: "invalid timestamp" };
+  if (!Number.isFinite(Number(state.timestamp)) || Number(state.timestamp) < 0) return { valid: false, reason: "invalid timestamp" };
+  if (Number(state.timestamp) === 0) return { valid: false, reason: "state not yet hydrated" };
 
   if (V2_PROTOCOLS.has(protocol)) {
     if (tokens.length !== 2) return { valid: false, reason: "V2: token count must be exactly 2" };

@@ -117,7 +117,7 @@ export async function executeWithRpcRetry<T, TClient = unknown>(
         throw error;
       }
 
-      if (isEndpointCapabilityError(error)) {
+      if (isEndpointCapabilityError(error, rpcMethod)) {
         capabilityFailedUrls.add(endpoint.url);
         rpcManager.markMethodUnavailable(endpoint.url, rpcMethod);
         if (attempt === 0 && onRateLimitMessage) {
@@ -141,7 +141,7 @@ export async function executeWithRpcRetry<T, TClient = unknown>(
 
       if (isAuthError(error)) {
         capabilityFailedUrls.add(endpoint.url);
-        rpcManager.markMethodUnavailable(endpoint.url, rpcMethod);
+        rpcManager.markAuthFailed(endpoint.url);
         if (attempt === 0 && onRateLimitMessage) {
           console.warn(onRateLimitMessage(rpcManagerShortUrl(endpoint.url), endpoint, attempt, "auth-failed"));
         }
@@ -153,7 +153,13 @@ export async function executeWithRpcRetry<T, TClient = unknown>(
         continue;
       }
 
-      if (!isRetryableError(error)) {
+      if (!isRetryableError(error, rpcMethod)) {
+        // If we haven't tried all endpoints yet, don't give up on non-retryable errors
+        // (they might be endpoint-specific, like Alchemy's "Feature not supported" for pending).
+        if (attempt < rpcManager.endpoints.length - 1) {
+          rpcManager.markError(endpoint.url, rpcMethod);
+          continue;
+        }
         throw error;
       }
       if (attempt === maxAttempts - 1) {

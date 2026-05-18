@@ -21,6 +21,7 @@ import { getPoolTokens } from "../../utils/pool_record.ts";
 import { normalizeHydrationAddresses, normalizeTokenHydrationAddress } from "./token_hydrator_helpers.ts";
 import { isPolygonSystemContract } from "../../utils/identity.ts";
 import { throttledMap } from "./rpc.ts";
+import { errorMessage } from "../../utils/errors.ts";
 
 // ─── HyperRPC client ──────────────────────────────────────────
 //
@@ -174,12 +175,16 @@ async function runMulticall(contracts: readonly MulticallContract[]) {
         // HyperRPC returns without error but all calls fail — fall back to RPC manager
         // which may route through a different endpoint with working Multicall3 support.
         if (Array.isArray(results) && results.length > 0 && results.every((r) => r?.status !== "success")) {
-          logger.warn("[token_hydrator] HyperRPC multicall returned all failures — falling back to RPC manager");
+          const firstError = results[0]?.status === "failure" ? errorMessage(results[0].error) : "unknown";
+          logger.warn(
+            { firstError, count: results.length },
+            "[token_hydrator] HyperRPC multicall returned all failures — falling back to RPC manager",
+          );
           return await fallbackMulticallClient.multicall({ contracts, allowFailure: true });
         }
         return results;
       } catch (err) {
-        if (isEndpointCapabilityError(err)) {
+        if (isEndpointCapabilityError(err, "eth_call")) {
           hyperRpcMulticallAvailable = false;
           logger.warn("[token_hydrator] HyperRPC does not support multicall here — falling back to RPC manager");
         } else {

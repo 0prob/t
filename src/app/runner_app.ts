@@ -298,6 +298,16 @@ export function createRunnerApp({ argv, env, processLike, exit }: RunnerAppDeps)
     refreshCycles: deferredActions.refreshCycles,
     maybeHydrateQuietPools,
     refreshPriceOracleIfStale: () => topologyRefreshCoordinator.refreshPriceOracleIfStale(),
+    onPassComplete: (passCount) => {
+      if (options.maxPasses != null && passCount >= options.maxPasses) {
+        log(`[runner] Reached max passes (${options.maxPasses}) — shutting down`, "info", {
+          event: "max_passes_reached",
+          maxPasses: options.maxPasses,
+          passCount,
+        });
+        void shutdown(0, "complete");
+      }
+    },
     searchOpportunities: () =>
       opportunityEngine ? opportunityEngine.search() : (console.warn("searchOpportunities called before engine init"), Promise.resolve([])),
     executeBatchIfIdle: (candidates, reason) =>
