@@ -1,5 +1,6 @@
 import http from "http";
-import { logger } from "../../utils/logger.ts";
+import { createRootLogger } from "./logger.ts";
+const logger = createRootLogger({ level: "info" });
 
 // ─── Lightweight metric primitives (no prom-client dependency) ────
 
